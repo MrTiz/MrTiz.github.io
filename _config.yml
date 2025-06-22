@@ -1,25 +1,4 @@
 title: Tiziano's Cybersecurity Blog
 description: Technical write-ups about vulnerabilities, exploits, and security topics.
-remote_theme: sujaykundu777/devlopr-jekyll
+theme: jekyll-theme-hacker
 lang: en-US
-plugins:
-  - jekyll-remote-theme
-  - jekyll-seo-tag
-
-baseurl: ""
-url: "https://mrtiz.github.io"
-
-author: MrTiz
-email: your-email@example.com
-github_username: MrTiz
-
-permalink: /:categories/:year/:month/:day/:title/
-
-header_pages:
-  - about.md
-  - contact.md
-
-social:
-  twitter: _MrTiz
-  linkedin: in/tiziano-marra/
-  github: MrTiz
