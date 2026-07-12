@@ -50,8 +50,8 @@ tags: [malware-dev, red-teaming, evasion, edr-evasion, cet, intel-cet, shadow-st
   - [6.1 Why Traditional Spoofing Breaks Under CET](#61-why-traditional-spoofing-breaks-under-cet)
   - [6.2 JMP Instead of RET](#62-jmp-instead-of-ret)
   - [6.3 Shadow Stack Pointer Reconciliation](#63-shadow-stack-pointer-reconciliation)
-  - [Phase 1](#phase-1)
-  - [Phase 2](#phase-2)
+    - [Phase 1](#phase-1)
+    - [Phase 2](#phase-2)
   - [6.4 Build Configuration for CET](#64-build-configuration-for-cet)
 - [7. The 39 Enum Functions](#7-the-39-enum-functions)
   - [7.1 The Complete List](#71-the-complete-list)
@@ -807,7 +807,7 @@ The reconciliation loop advances the SSP until it lines up with what's on the no
 
 In practice, the loop fires exactly once per context switch: it skips the one stale entry left by the `call user_mode_continue`, then finds the target return address (from `RtlVirtualUnwind`) which matches `[new_rsp]`. Done.
 
-### Phase 1
+#### Phase 1
 
 When `user_mode_continue` starts executing, the normal stack (`RSP`) has not been shifted yet. The Shadow Stack Pointer (`SSP`) naturally points to the return address left by the `call user_mode_continue` instruction (in this case, back into `thread_pool_worker_enum`). You can see this stale entry at the top of the shadow stack:
 
@@ -825,7 +825,7 @@ However, our forged context (`new_rsp`) expects to return directly to `TppWorkpE
     <em>Phase 1: Shadow stack after reconciliation</em>
 </p>
 
-### Phase 2
+#### Phase 2
 
 The exact same mechanics apply during the second context switch. The `call user_mode_continue` from inside the enum callback pushes a return address (`manual_stack_unwind_enum+0x329`) onto the shadow stack. Since we are going to `jmp` to the syscall trampoline instead of returning, this entry is stale:
 
