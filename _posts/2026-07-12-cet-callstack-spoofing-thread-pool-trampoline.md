@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "CET-Compliant Callstack Spoofing via Thread Pool Enum Callback Trampoliningl"
+title: "CET-Compliant Callstack Spoofing via Thread Pool Enum Callback Trampolining"
 date: 2026-07-12
 permalink: /cet-callstack-spoofing-thread-pool-trampoline
 lang: en
