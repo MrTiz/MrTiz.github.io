@@ -1,4 +1,12 @@
-# CET-Compliant Callstack Spoofing via Thread Pool Enum Callback Trampolining
+---
+layout: post
+title: "CET-Compliant Callstack Spoofing via Thread Pool Enum Callback Trampoliningl"
+date: 2026-07-12
+permalink: /cet-callstack-spoofing-thread-pool-trampoline
+lang: en
+author: Tiziano Marra
+tags: [malware-dev, red-teaming, evasion, edr-evasion, cet, intel-cet, shadow-stack, hardware-mitigations, callstack-spoofing, stack-spoofing, indirect-syscalls, direct-syscalls, thread-pool, thread-pool-api, enum-callback, trampolining, windows-internals, winapi, x64-assembly, rtlvirtualunwind, rust, rustsec, infosec, offensive-security]
+---
 
 > **Disclaimer.** This research is published for **educational and defensive purposes only**. I do not endorse the use of this technique for unauthorized access to any computer system. Always obtain explicit written authorization before testing. If you use this on systems you don't own, that's on you, and it's illegal.
 
@@ -8,69 +16,68 @@
 
 ## Table of Contents
 
-- [CET-Compliant Callstack Spoofing via Thread Pool Enum Callback Trampolining](#cet-compliant-callstack-spoofing-via-thread-pool-enum-callback-trampolining)
-  - [Table of Contents](#table-of-contents)
-  - [1. Abstract](#1-abstract)
-  - [2. A Brief History of Syscall Evasion](#2-a-brief-history-of-syscall-evasion)
-    - [2.1 The era of API hooking and direct syscalls (~2019-2020)](#21-the-era-of-api-hooking-and-direct-syscalls-2019-2020)
-    - [2.2 The EDR counterattack: kernel telemetry (~2021)](#22-the-edr-counterattack-kernel-telemetry-2021)
-    - [2.3 Indirect syscalls (~2021-2022)](#23-indirect-syscalls-2021-2022)
-    - [2.4 Call stack spoofing (~2022-2023)](#24-call-stack-spoofing-2022-2023)
-    - [2.5 CET enters the picture (~2023-2025)](#25-cet-enters-the-picture-2023-2025)
-    - [2.6 Where my technique fits](#26-where-my-technique-fits)
-  - [3. Background Concepts](#3-background-concepts)
-    - [3.1 The Windows x64 Calling Convention](#31-the-windows-x64-calling-convention)
-    - [3.2 How EDRs Inspect Call Stacks](#32-how-edrs-inspect-call-stacks)
-    - [3.3 What Is an Indirect Syscall?](#33-what-is-an-indirect-syscall)
-    - [3.4 The Windows Thread Pool](#34-the-windows-thread-pool)
-    - [3.5 Enum Callback Functions](#35-enum-callback-functions)
-    - [3.6 Manual Stack Unwinding with RtlVirtualUnwind](#36-manual-stack-unwinding-with-rtlvirtualunwind)
-    - [3.7 Intel CET and the Shadow Stack](#37-intel-cet-and-the-shadow-stack)
-    - [3.8 The TEB ArbitraryUserPointer](#38-the-teb-arbitraryuserpointer)
-  - [4. Technique Design](#4-technique-design)
-    - [4.1 High-Level Overview](#41-high-level-overview)
-    - [4.2 The Three Phases](#42-the-three-phases)
-    - [4.3 The Resulting Callstack](#43-the-resulting-callstack)
-  - [5. Implementation Deep Dive](#5-implementation-deep-dive)
-    - [5.1 The EmbeddedContext Structure](#51-the-embeddedcontext-structure)
-    - [5.2 The Thread Pool Dispatcher](#52-the-thread-pool-dispatcher)
-    - [5.3 Phase 1: The Thread Pool Worker](#53-phase-1-the-thread-pool-worker)
-    - [5.4 Phase 2: The Enum Callback (Syscall Execution)](#54-phase-2-the-enum-callback-syscall-execution)
-    - [5.5 Phase 3: Cleanup](#55-phase-3-cleanup)
-    - [5.6 user\_mode\_continue: CET-Compliant Context Switch](#56-user_mode_continue-cet-compliant-context-switch)
-    - [5.7 A Note on RAX: You Can't Get It Back](#57-a-note-on-rax-you-cant-get-it-back)
-  - [6. CET Compliance: The Core Contribution](#6-cet-compliance-the-core-contribution)
-    - [6.1 Why Traditional Spoofing Breaks Under CET](#61-why-traditional-spoofing-breaks-under-cet)
-    - [6.2 JMP Instead of RET](#62-jmp-instead-of-ret)
-    - [6.3 Shadow Stack Pointer Reconciliation](#63-shadow-stack-pointer-reconciliation)
-    - [Phase 1](#phase-1)
-    - [Phase 2](#phase-2)
-    - [6.4 Build Configuration for CET](#64-build-configuration-for-cet)
-  - [7. The 39 Enum Functions](#7-the-39-enum-functions)
-    - [7.1 The Complete List](#71-the-complete-list)
-    - [7.2 Why These Functions Work](#72-why-these-functions-work)
-    - [7.3 Not All Functions Support All Syscall Argument Counts](#73-not-all-functions-support-all-syscall-argument-counts)
-    - [7.4 A Note on InitOnceExecuteOnce](#74-a-note-on-initonceexecuteonce)
-    - [7.5 Why Not user32.dll?](#75-why-not-user32dll)
-  - [8. The Debugging Nightmare](#8-the-debugging-nightmare)
-    - [8.1 The Enum Function Crashes](#81-the-enum-function-crashes)
-    - [8.2 The Thread Pool Crashes](#82-the-thread-pool-crashes)
-    - [8.3 The 8-Byte Offset That Ruined My Week](#83-the-8-byte-offset-that-ruined-my-week)
-    - [8.4 INCSSPD vs INCSSPQ: The 4-Byte Misalignment](#84-incsspd-vs-incsspq-the-4-byte-misalignment)
-  - [9. About This PoC](#9-about-this-poc)
-    - [9.1 What Is Intentionally Simplified](#91-what-is-intentionally-simplified)
-    - [9.2 This Is NOT a Weapon](#92-this-is-not-a-weapon)
-  - [10. Future Work](#10-future-work)
-  - [11. Detection and Countermeasures](#11-detection-and-countermeasures)
-    - [11.1 TEB ArbitraryUserPointer Monitoring](#111-teb-arbitraryuserpointer-monitoring)
-    - [11.2 Shadow Stack vs. Normal Stack Divergence](#112-shadow-stack-vs-normal-stack-divergence)
-    - [11.3 Heuristic Call Stack Analysis](#113-heuristic-call-stack-analysis)
-    - [11.4 Enum Callback Behavioral Analysis](#114-enum-callback-behavioral-analysis)
-    - [11.5 Thread Pool Work Item Profiling](#115-thread-pool-work-item-profiling)
-    - [11.6 INCSSPQ Instruction Monitoring](#116-incsspq-instruction-monitoring)
-  - [12. Conclusion](#12-conclusion)
-  - [13. Prior Art and Acknowledgments](#13-prior-art-and-acknowledgments)
-  - [14. References](#14-references)
+- [Table of Contents](#table-of-contents)
+- [1. Abstract](#1-abstract)
+- [2. A Brief History of Syscall Evasion](#2-a-brief-history-of-syscall-evasion)
+  - [2.1 The era of API hooking and direct syscalls (~2019-2020)](#21-the-era-of-api-hooking-and-direct-syscalls-2019-2020)
+  - [2.2 The EDR counterattack: kernel telemetry (~2021)](#22-the-edr-counterattack-kernel-telemetry-2021)
+  - [2.3 Indirect syscalls (~2021-2022)](#23-indirect-syscalls-2021-2022)
+  - [2.4 Call stack spoofing (~2022-2023)](#24-call-stack-spoofing-2022-2023)
+  - [2.5 CET enters the picture (~2023-2025)](#25-cet-enters-the-picture-2023-2025)
+  - [2.6 Where my technique fits](#26-where-my-technique-fits)
+- [3. Background Concepts](#3-background-concepts)
+  - [3.1 The Windows x64 Calling Convention](#31-the-windows-x64-calling-convention)
+  - [3.2 How EDRs Inspect Call Stacks](#32-how-edrs-inspect-call-stacks)
+  - [3.3 What Is an Indirect Syscall?](#33-what-is-an-indirect-syscall)
+  - [3.4 The Windows Thread Pool](#34-the-windows-thread-pool)
+  - [3.5 Enum Callback Functions](#35-enum-callback-functions)
+  - [3.6 Manual Stack Unwinding with RtlVirtualUnwind](#36-manual-stack-unwinding-with-rtlvirtualunwind)
+  - [3.7 Intel CET and the Shadow Stack](#37-intel-cet-and-the-shadow-stack)
+  - [3.8 The TEB ArbitraryUserPointer](#38-the-teb-arbitraryuserpointer)
+- [4. Technique Design](#4-technique-design)
+  - [4.1 High-Level Overview](#41-high-level-overview)
+  - [4.2 The Three Phases](#42-the-three-phases)
+  - [4.3 The Resulting Callstack](#43-the-resulting-callstack)
+- [5. Implementation Deep Dive](#5-implementation-deep-dive)
+  - [5.1 The EmbeddedContext Structure](#51-the-embeddedcontext-structure)
+  - [5.2 The Thread Pool Dispatcher](#52-the-thread-pool-dispatcher)
+  - [5.3 Phase 1: The Thread Pool Worker](#53-phase-1-the-thread-pool-worker)
+  - [5.4 Phase 2: The Enum Callback (Syscall Execution)](#54-phase-2-the-enum-callback-syscall-execution)
+  - [5.5 Phase 3: Cleanup](#55-phase-3-cleanup)
+  - [5.6 user\_mode\_continue: CET-Compliant Context Switch](#56-user_mode_continue-cet-compliant-context-switch)
+  - [5.7 A Note on RAX: You Can't Get It Back](#57-a-note-on-rax-you-cant-get-it-back)
+- [6. CET Compliance: The Core Contribution](#6-cet-compliance-the-core-contribution)
+  - [6.1 Why Traditional Spoofing Breaks Under CET](#61-why-traditional-spoofing-breaks-under-cet)
+  - [6.2 JMP Instead of RET](#62-jmp-instead-of-ret)
+  - [6.3 Shadow Stack Pointer Reconciliation](#63-shadow-stack-pointer-reconciliation)
+  - [Phase 1](#phase-1)
+  - [Phase 2](#phase-2)
+  - [6.4 Build Configuration for CET](#64-build-configuration-for-cet)
+- [7. The 39 Enum Functions](#7-the-39-enum-functions)
+  - [7.1 The Complete List](#71-the-complete-list)
+  - [7.2 Why These Functions Work](#72-why-these-functions-work)
+  - [7.3 Not All Functions Support All Syscall Argument Counts](#73-not-all-functions-support-all-syscall-argument-counts)
+  - [7.4 A Note on InitOnceExecuteOnce](#74-a-note-on-initonceexecuteonce)
+  - [7.5 Why Not user32.dll?](#75-why-not-user32dll)
+- [8. The Debugging Nightmare](#8-the-debugging-nightmare)
+  - [8.1 The Enum Function Crashes](#81-the-enum-function-crashes)
+  - [8.2 The Thread Pool Crashes](#82-the-thread-pool-crashes)
+  - [8.3 The 8-Byte Offset That Ruined My Week](#83-the-8-byte-offset-that-ruined-my-week)
+  - [8.4 INCSSPD vs INCSSPQ: The 4-Byte Misalignment](#84-incsspd-vs-incsspq-the-4-byte-misalignment)
+- [9. About This PoC](#9-about-this-poc)
+  - [9.1 What Is Intentionally Simplified](#91-what-is-intentionally-simplified)
+  - [9.2 This Is NOT a Weapon](#92-this-is-not-a-weapon)
+- [10. Future Work](#10-future-work)
+- [11. Detection and Countermeasures](#11-detection-and-countermeasures)
+  - [11.1 TEB ArbitraryUserPointer Monitoring](#111-teb-arbitraryuserpointer-monitoring)
+  - [11.2 Shadow Stack vs. Normal Stack Divergence](#112-shadow-stack-vs-normal-stack-divergence)
+  - [11.3 Heuristic Call Stack Analysis](#113-heuristic-call-stack-analysis)
+  - [11.4 Enum Callback Behavioral Analysis](#114-enum-callback-behavioral-analysis)
+  - [11.5 Thread Pool Work Item Profiling](#115-thread-pool-work-item-profiling)
+  - [11.6 INCSSPQ Instruction Monitoring](#116-incsspq-instruction-monitoring)
+- [12. Conclusion](#12-conclusion)
+- [13. Prior Art and Acknowledgments](#13-prior-art-and-acknowledgments)
+- [14. References](#14-references)
 
 ---
 
@@ -101,7 +108,7 @@ Before diving in, let me give some context on how we got here. The cat-and-mouse
 For years, EDRs relied on user-mode API hooking. The EDR injects a DLL into every process, places trampolines at the beginning of sensitive `ntdll.dll` functions (`NtAllocateVirtualMemory`, `NtProtectVirtualMemory`, `NtWriteVirtualMemory`, etc.), and intercepts every call to inspect arguments before letting it through.
 
 <p align="center">
-    <img src="/assets/img/user-mode-hooking.png" alt="User-mode hooking">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/user-mode-hooking.png" alt="User-mode hooking">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -111,7 +118,7 @@ The offensive response was **direct syscalls**: skip `ntdll.dll` entirely. Load 
 [SysWhispers](https://github.com/jthuraisamy/SysWhispers) by @jthuraisamy made this accessible by generating header/ASM stubs. [SysWhispers2](https://github.com/jthuraisamy/SysWhispers2) improved `SSN` resolution. Around the same time, [Hell's Gate](https://github.com/am0nsec/HellsGate) by am0nsec and smelly\_\_vx introduced dynamic `SSN` resolution by parsing `ntdll.dll` in memory. [Halo's Gate](https://blog.sektor7.net/#!res/2021/halosgate.md) and [Tartarus' Gate](https://github.com/trickster0/TartarusGate) by trickster0 handled cases where some stubs were hooked.
 
 <p align="center">
-    <img src="/assets/img/direct_syscalls_principle.png" alt="Direct syscalls principle diagram">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/direct_syscalls_principle.png" alt="Direct syscalls principle diagram">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -137,7 +144,7 @@ The answer was **indirect syscalls**: instead of executing `syscall` from your c
 The immediate return address now points into `ntdll.dll`. Clean. But the rest of the stack still reveals the real caller. EDRs started walking deeper.
 
 <p align="center">
-    <img src="/assets/img/indirect_syscalls_principle.png" alt="Indirect syscalls principle diagram">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/indirect_syscalls_principle.png" alt="Indirect syscalls principle diagram">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -155,7 +162,7 @@ Next step: forge the entire stack. Make every frame look legitimate. Several res
 All solid work. But they all share a problem: they manipulate return addresses on the normal stack. And then Intel dropped the bomb.
 
 <p align="center">
-    <img src="/assets/img/call_stack_spoofing_theory.png" alt="Call stack spoofing">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/call_stack_spoofing_theory.png" alt="Call stack spoofing">
     <br>
     <em>Image credit: <a href="https://dtsec.us/2023-09-15-StackSpoofin/" target="_blank">dtsec.us</a></em>
 </p>
@@ -249,7 +256,7 @@ fn get_trampoline(func_addr: *mut u8) -> Result<u64, ()> {
 When I want to run the `syscall`, I load the `SSN` into `RAX`, arguments into the right registers, and jump to the trampoline. The kernel sees the return address pointing into `ntdll.dll`. Clean.
 
 <p align="center">
-    <img src="/assets/img/ZwProtectVirtualMemory_trampoline_ssn.png" alt="x64dbg ZwProtectVirtualMemory disassembly">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_trampoline_ssn.png" alt="x64dbg ZwProtectVirtualMemory disassembly">
     <br>
     <em>x64dbg ZwProtectVirtualMemory disassembly</em>
 </p>
@@ -337,7 +344,7 @@ There are however two user-mode instructions we can use:
 These are the foundation of my CET compliance strategy.
 
 <p align="center">
-    <img src="/assets/img/fully_working_SSP_vs_CS.png" alt="Example of fully working Shadow Stack compared to normal call stack">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/fully_working_SSP_vs_CS.png" alt="Example of fully working Shadow Stack compared to normal call stack">
     <br>
     <em>Example of fully working Shadow Stack compared to normal call stack</em>
 </p>
@@ -431,7 +438,7 @@ We unwind our frame and redirect execution to `EnumSystemLocalesEx`. After the r
 Every single frame: `ntdll.dll`, `kernelbase.dll`, or `kernel32.dll`. No unbacked memory.
 
 <p align="center">
-    <img src="/assets/img/ZwProtectVirtualMemory_callstack_ssp.png" alt="WinDbg callstack at the moment of syscall">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_callstack_ssp.png" alt="WinDbg callstack at the moment of syscall">
     <br>
     <em>WinDbg callstack at the moment of syscall</em>
 </p>
@@ -453,7 +460,7 @@ ntdll!RtlUserThreadStart+2C
 `EnumSystemLocalesEx` (resolved from `kernelbase.dll`) internally calls `Internal_EnumSystemLocales`, which in turn calls our callback. Both frames are on the stack, both from `kernelbase.dll`.
 
 <p align="center">
-    <img src="/assets/img/console_output.png" alt="Console output showing successful execution">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/console_output.png" alt="Console output showing successful execution">
     <br>
     <em>Console output showing successful execution</em>
 </p>
@@ -805,7 +812,7 @@ In practice, the loop fires exactly once per context switch: it skips the one st
 When `user_mode_continue` starts executing, the normal stack (`RSP`) has not been shifted yet. The Shadow Stack Pointer (`SSP`) naturally points to the return address left by the `call user_mode_continue` instruction (in this case, back into `thread_pool_worker_enum`). You can see this stale entry at the top of the shadow stack:
 
 <p align="center">
-    <img src="/assets/img/phase_1_ssp_before_incsspq.png" alt="Phase 1: Shadow stack before reconciliation">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_before_incsspq.png" alt="Phase 1: Shadow stack before reconciliation">
     <br>
     <em>Phase 1: Shadow stack before reconciliation</em>
 </p>
@@ -813,7 +820,7 @@ When `user_mode_continue` starts executing, the normal stack (`RSP`) has not bee
 However, our forged context (`new_rsp`) expects to return directly to `TppWorkpExecuteCallback`. The reconciliation loop compares the SSP entries against our target and executes `INCSSPQ`. This advances the SSP by 8 bytes, skipping the stale entry and aligning the shadow stack with our intended return address:
 
 <p align="center">
-    <img src="/assets/img/phase_1_ssp_after_incsspq.png" alt="Phase 1: Shadow stack after reconciliation">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_after_incsspq.png" alt="Phase 1: Shadow stack after reconciliation">
     <br>
     <em>Phase 1: Shadow stack after reconciliation</em>
 </p>
@@ -823,7 +830,7 @@ However, our forged context (`new_rsp`) expects to return directly to `TppWorkpE
 The exact same mechanics apply during the second context switch. The `call user_mode_continue` from inside the enum callback pushes a return address (`manual_stack_unwind_enum+0x329`) onto the shadow stack. Since we are going to `jmp` to the syscall trampoline instead of returning, this entry is stale:
 
 <p align="center">
-    <img src="/assets/img/phase_2_ssp_before_incsspq.png" alt="Phase 2: Shadow stack before reconciliation">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_before_incsspq.png" alt="Phase 2: Shadow stack before reconciliation">
     <br>
     <em>Phase 2: Shadow stack before reconciliation</em>
 </p>
@@ -831,7 +838,7 @@ The exact same mechanics apply during the second context switch. The `call user_
 The reconciliation loop finds the discrepancy and advances the SSP. The shadow stack now perfectly matches our forged target (`Internal_EnumSystemLocales+0x348`), ready for the syscall's `ret` instruction to pop it without raising a `#CP` fault:
 
 <p align="center">
-    <img src="/assets/img/phase_2_ssp_after_incsspq.png" alt="Phase 2: Shadow stack after reconciliation">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_after_incsspq.png" alt="Phase 2: Shadow stack after reconciliation">
     <br>
     <em>Phase 2: Shadow stack after reconciliation</em>
 </p>
@@ -839,7 +846,7 @@ The reconciliation loop finds the discrepancy and advances the SSP. The shadow s
 After the syscall is successfully executed, `ZwProtectVirtualMemory` correctly returns to `Internal_EnumSystemLocales`, proving that the callstack and the shadow stack are perfectly aligned with each other:
 
 <p align="center">
-    <img src="/assets/img/ssp_vs_cs_after_syscall.png" alt="Shadow stack vs Normal stack after syscall">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ssp_vs_cs_after_syscall.png" alt="Shadow stack vs Normal stack after syscall">
     <br>
     <em>Shadow stack vs Normal stack after syscall</em>
 </p>
@@ -874,7 +881,7 @@ rustflags = [
 If the technique had a CET bug, the process would crash during testing. It doesn't.
 
 <p align="center">
-    <img src="/assets/img/PE_DLL_Characteristics.png" alt="PE DLL Characteristics">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/PE_DLL_Characteristics.png" alt="PE DLL Characteristics">
     <br>
     <em>PE DLL Characteristics</em>
 </p>
@@ -1067,7 +1074,7 @@ The reason this bug survived so long: the original `user_mode_continue` was `#[i
 The exception was at `ntdll!NtProtectVirtualMemory+0x14` (the `ret` after `syscall`). The callstack was perfect, every frame from a signed module. But the shadow stack was misaligned by 4 bytes, and CET didn't care how pretty the normal stack looked.
 
 <p align="center">
-    <img src="/assets/img/STATUS_STACK_BUFFER_OVERRUN.png" alt="STATUS STACK BUFFER OVERRUN">
+    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/STATUS_STACK_BUFFER_OVERRUN.png" alt="STATUS STACK BUFFER OVERRUN">
     <br>
     <em>STATUS STACK BUFFER OVERRUN</em>
 </p>
