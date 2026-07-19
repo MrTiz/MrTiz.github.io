@@ -1,0 +1,743 @@
+// Code blocks + Rouge syntax highlighting.
+// Dark is the default; light overrides at the bottom.
+// Uses comma-separated hsl() for libsass 3.x compat.
+
+// --- Block wrapper ---
+// Scope to div/figure to avoid styling inline <code> spans
+// (kramdown puts .highlighter-rouge on both).
+.code-block,
+div.highlighter-rouge,
+figure.highlighter-rouge,
+figure.highlight:not(.highlighter-rouge *),
+div.highlight:not(.highlighter-rouge *):not(figure.highlight *) {
+    position: relative;
+    margin: var(--space-5) 0;
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-2);
+    background: var(--bg-1);
+    overflow: hidden;
+}
+
+// Per-language --lang-color (overridden by .language-XXX selectors below)
+.highlighter-rouge,
+.code-block,
+figure.highlight,
+div.highlight {
+    --lang-color: var(--fg-3);
+}
+
+// Nested .highlight inside .highlighter-rouge: just a structural wrapper
+div.highlighter-rouge div.highlight,
+figure.highlighter-rouge div.highlight {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+}
+
+// Header bar (language label + buttons), injected by copy-code.js
+.code-block__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem 1rem;
+    padding-left: calc(1rem - 3px);
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border-1);
+    border-left: 3px solid var(--lang-color);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--fg-3);
+    letter-spacing: 0.03em;
+}
+
+.code-block__lang {
+    text-transform: uppercase;
+    color: var(--lang-color);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+.code-block__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.code-block__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-1);
+    background: transparent;
+    color: var(--fg-2);
+    font-size: var(--step--1);
+    font-family: var(--font-mono);
+    transition: all var(--dur-1) var(--ease);
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.code-block__btn:hover {
+    background: var(--bg-3);
+    color: var(--fg-0);
+    border-color: var(--border-2);
+}
+
+.code-block__btn svg {
+    width: 0.9em;
+    height: 0.9em;
+}
+
+.code-block__copy[data-state="copied"] {
+    color: var(--success);
+}
+
+.code-block__wrap[aria-pressed="true"] {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+@media (max-width: 480px) {
+    .code-block__btn span {
+        display: none;
+    }
+
+    .code-block__btn {
+        padding: 0.35rem;
+    }
+}
+
+// --- <pre> baseline ---
+pre.highlight,
+div.highlight>pre,
+div.highlighter-rouge pre,
+figure.highlighter-rouge pre {
+    margin: 0;
+    background: transparent;
+    color: var(--fg-1);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    font-feature-settings: "liga" 0, "calt" 0;
+    -webkit-font-smoothing: antialiased;
+    tab-size: 4;
+}
+
+// --- Rouge table (no-JS fallback) ---
+div.highlighter-rouge table.rouge-table,
+figure.highlighter-rouge table.rouge-table,
+.highlight table.rouge-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin: 0;
+    min-width: 100%;
+}
+
+.rouge-table tbody,
+.rouge-table tr {
+    border: 0;
+    background: transparent;
+}
+
+.rouge-table td {
+    border: 0;
+    vertical-align: top;
+    padding: 0;
+    background: transparent;
+}
+
+.rouge-table td:hover {
+    background: transparent;
+}
+
+.rouge-table td.rouge-gutter {
+    width: 2.75rem;
+    padding: var(--space-2) 1.1rem var(--space-2) var(--space-3);
+    text-align: right;
+    color: var(--fg-3);
+    background: transparent;
+    border-right: 1px solid var(--border-1);
+    opacity: 0.55;
+    user-select: none;
+    -webkit-user-select: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.rouge-table td.rouge-gutter pre {
+    margin: 0;
+    padding: 0;
+    white-space: pre;
+    overflow: visible;
+    text-align: right;
+}
+
+.rouge-table td.rouge-code {
+    padding: var(--space-2) var(--space-4) var(--space-2) 1.1rem;
+    min-width: 0;
+}
+
+.rouge-table td.rouge-code pre {
+    margin: 0;
+    padding: 0;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+// --- Post-JS grid (replaces the table above) ---
+.rouge-grid {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: stretch;
+    padding: var(--space-2) 0;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    font-feature-settings: "liga" 0, "calt" 0;
+    -webkit-font-smoothing: antialiased;
+    tab-size: 4;
+}
+
+.rouge-num {
+    align-content: start;
+    padding: 0 1.1rem 0 var(--space-3);
+    text-align: right;
+    color: var(--fg-3);
+    opacity: 0.55;
+    border-right: 1px solid var(--border-1);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.rouge-line {
+    padding: 0 var(--space-4) 0 1.1rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
+    color: var(--fg-1);
+}
+
+@media (max-width: 640px) {
+    .rouge-grid {
+        font-size: 0.85rem;
+    }
+
+    .rouge-num {
+        padding: 0 0.85rem 0 var(--space-2);
+    }
+
+    .rouge-line {
+        padding: 0 var(--space-3) 0 0.85rem;
+    }
+}
+
+// Wrap toggle OFF
+.code-block.is-nowrap>.highlight {
+    overflow-x: auto;
+}
+
+.code-block.is-nowrap .rouge-line {
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+// --- Plain blocks (no line numbers) ---
+div.highlighter-rouge>.highlight>pre:not(:has(table)),
+figure.highlight>pre:not(:has(table)),
+div.highlighter-rouge pre.highlight:not(:has(table)) {
+    padding: var(--space-3) var(--space-4);
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+pre code {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font-size: inherit;
+    white-space: inherit;
+}
+
+@media (max-width: 640px) {
+    .rouge-table td.rouge-gutter {
+        width: 2.25rem;
+        padding-left: var(--space-2);
+        padding-right: 0.85rem;
+        font-size: 0.8rem;
+    }
+
+    .rouge-table td.rouge-code {
+        padding: var(--space-2) var(--space-3) var(--space-2) 0.85rem;
+        font-size: 0.85rem;
+    }
+
+    div.highlighter-rouge>.highlight>pre:not(:has(table)) {
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.85rem;
+    }
+}
+
+pre::-webkit-scrollbar {
+    height: 8px;
+}
+
+pre::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+pre::-webkit-scrollbar-thumb {
+    background: var(--border-2);
+    border-radius: 4px;
+}
+
+pre::-webkit-scrollbar-thumb:hover {
+    background: var(--fg-3);
+}
+
+// --- Token palette: dark ---
+.highlight {
+    --c-red: hsl(354, 65%, 68%);
+    --c-orange: hsl(28, 85%, 65%);
+    --c-yellow: hsl(45, 80%, 68%);
+    --c-green: hsl(140, 45%, 65%);
+    --c-cyan: hsl(190, 70%, 68%);
+    --c-blue: hsl(210, 70%, 70%);
+    --c-purple: hsl(275, 55%, 72%);
+    --c-comment: hsl(220, 10%, 50%);
+
+    .c,
+    .ch,
+    .cm,
+    .cp,
+    .cpf,
+    .c1,
+    .cs {
+        color: var(--c-comment);
+        font-style: italic;
+    }
+
+    .err {
+        color: var(--c-red);
+    }
+
+    .g {
+        color: var(--fg-1);
+    }
+
+    .k,
+    .kc,
+    .kd,
+    .kn,
+    .kp,
+    .kr,
+    .kt,
+    .kv {
+        color: var(--c-red);
+    }
+
+    .l,
+    .ld {
+        color: var(--c-green);
+    }
+
+    .m,
+    .mb,
+    .mf,
+    .mh,
+    .mi,
+    .il,
+    .mo,
+    .mx {
+        color: var(--c-orange);
+    }
+
+    .s,
+    .sa,
+    .sb,
+    .sc,
+    .dl,
+    .sd,
+    .s2,
+    .se,
+    .sh,
+    .si,
+    .sx,
+    .sr,
+    .s1,
+    .ss {
+        color: var(--c-green);
+    }
+
+    .sr {
+        color: var(--c-purple);
+    }
+
+    .n {
+        color: var(--fg-1);
+    }
+
+    .na {
+        color: var(--c-cyan);
+    }
+
+    .bp,
+    .nb {
+        color: var(--c-orange);
+    }
+
+    .nc {
+        color: var(--c-yellow);
+    }
+
+    .no {
+        color: var(--c-orange);
+    }
+
+    .nd {
+        color: var(--c-purple);
+    }
+
+    .ni {
+        color: var(--c-orange);
+    }
+
+    .ne {
+        color: var(--c-red);
+    }
+
+    .nf,
+    .fm {
+        color: var(--c-yellow);
+    }
+
+    .nl {
+        color: var(--c-cyan);
+    }
+
+    .nn {
+        color: var(--c-yellow);
+    }
+
+    .nx {
+        color: var(--c-yellow);
+    }
+
+    .py {
+        color: var(--c-blue);
+    }
+
+    .nt {
+        color: var(--c-red);
+    }
+
+    .nv,
+    .vc,
+    .vg,
+    .vi,
+    .vm {
+        color: var(--c-blue);
+    }
+
+    .o,
+    .ow {
+        color: var(--c-cyan);
+    }
+
+    .p,
+    .pi {
+        color: var(--fg-2);
+    }
+
+    .w {
+        color: transparent;
+    }
+
+    // Diff
+    .gd {
+        color: var(--c-red);
+        background: hsla(354, 65%, 30%, 0.15);
+    }
+
+    .gi {
+        color: var(--c-green);
+        background: hsla(140, 45%, 30%, 0.15);
+    }
+
+    .gh,
+    .gu {
+        color: var(--c-purple);
+        font-weight: 600;
+    }
+
+    .go {
+        color: var(--fg-2);
+    }
+
+    .gp {
+        color: var(--c-cyan);
+        font-weight: 600;
+    }
+
+    .gs {
+        font-weight: 600;
+    }
+
+    .ge {
+        font-style: italic;
+    }
+
+    .gr {
+        color: var(--c-red);
+    }
+
+    .gt {
+        color: var(--c-red);
+    }
+
+    .lineno {
+        color: var(--fg-3);
+        padding-right: 0.75rem;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+}
+
+// --- Token palette: light ---
+:root[data-theme="light"] .highlight {
+    --c-red: hsl(354, 70%, 42%);
+    --c-orange: hsl(28, 90%, 40%);
+    --c-yellow: hsl(35, 85%, 38%);
+    --c-green: hsl(140, 55%, 30%);
+    --c-cyan: hsl(200, 80%, 32%);
+    --c-blue: hsl(215, 80%, 38%);
+    --c-purple: hsl(275, 55%, 42%);
+    --c-comment: hsl(220, 15%, 45%);
+}
+
+// --- Language accent colours (header stripe + label) ---
+.language-rust {
+    --lang-color: hsl(20, 85%, 60%);
+}
+
+.language-c,
+.language-cpp,
+.language-cxx,
+.language-c\\+\\+ {
+    --lang-color: hsl(210, 65%, 60%);
+}
+
+.language-javascript,
+.language-js,
+.language-jsx {
+    --lang-color: hsl(50, 85%, 60%);
+}
+
+.language-typescript,
+.language-ts,
+.language-tsx {
+    --lang-color: hsl(210, 80%, 62%);
+}
+
+.language-python,
+.language-py {
+    --lang-color: hsl(45, 75%, 60%);
+}
+
+.language-ruby,
+.language-rb {
+    --lang-color: hsl(0, 65%, 60%);
+}
+
+.language-go,
+.language-golang {
+    --lang-color: hsl(190, 75%, 60%);
+}
+
+.language-java {
+    --lang-color: hsl(20, 60%, 55%);
+}
+
+.language-kotlin,
+.language-kt {
+    --lang-color: hsl(285, 55%, 65%);
+}
+
+.language-swift {
+    --lang-color: hsl(20, 85%, 62%);
+}
+
+.language-php {
+    --lang-color: hsl(245, 40%, 65%);
+}
+
+.language-csharp,
+.language-cs {
+    --lang-color: hsl(130, 55%, 55%);
+}
+
+.language-html,
+.language-htm {
+    --lang-color: hsl(15, 80%, 60%);
+}
+
+.language-css {
+    --lang-color: hsl(210, 75%, 60%);
+}
+
+.language-scss,
+.language-sass {
+    --lang-color: hsl(325, 60%, 65%);
+}
+
+.language-json {
+    --lang-color: hsl(35, 80%, 60%);
+}
+
+.language-yaml,
+.language-yml {
+    --lang-color: hsl(20, 65%, 60%);
+}
+
+.language-toml {
+    --lang-color: hsl(35, 70%, 55%);
+}
+
+.language-xml,
+.language-svg {
+    --lang-color: hsl(15, 65%, 60%);
+}
+
+.language-markdown,
+.language-md {
+    --lang-color: hsl(220, 15%, 65%);
+}
+
+.language-bash,
+.language-sh,
+.language-shell,
+.language-zsh {
+    --lang-color: hsl(140, 50%, 60%);
+}
+
+.language-powershell,
+.language-ps1,
+.language-pwsh {
+    --lang-color: hsl(210, 70%, 62%);
+}
+
+.language-sql {
+    --lang-color: hsl(190, 60%, 60%);
+}
+
+.language-nasm,
+.language-asm,
+.language-x86asm,
+.language-armasm,
+.language-gas {
+    --lang-color: hsl(40, 75%, 58%);
+}
+
+.language-dockerfile,
+.language-docker {
+    --lang-color: hsl(210, 75%, 60%);
+}
+
+.language-nginx,
+.language-apache {
+    --lang-color: hsl(140, 45%, 55%);
+}
+
+.language-diff {
+    --lang-color: hsl(275, 55%, 65%);
+}
+
+.language-vim {
+    --lang-color: hsl(140, 50%, 55%);
+}
+
+.language-lua {
+    --lang-color: hsl(245, 60%, 65%);
+}
+
+.language-perl,
+.language-pl {
+    --lang-color: hsl(210, 60%, 60%);
+}
+
+.language-r {
+    --lang-color: hsl(210, 55%, 55%);
+}
+
+.language-julia {
+    --lang-color: hsl(275, 55%, 60%);
+}
+
+.language-elixir,
+.language-ex {
+    --lang-color: hsl(275, 55%, 70%);
+}
+
+.language-erlang,
+.language-erl {
+    --lang-color: hsl(0, 55%, 55%);
+}
+
+.language-haskell,
+.language-hs {
+    --lang-color: hsl(275, 45%, 60%);
+}
+
+.language-scala {
+    --lang-color: hsl(0, 55%, 55%);
+}
+
+.language-clojure,
+.language-clj {
+    --lang-color: hsl(140, 55%, 55%);
+}
+
+.language-dart {
+    --lang-color: hsl(200, 70%, 60%);
+}
+
+.language-graphql {
+    --lang-color: hsl(320, 60%, 65%);
+}
+
+.language-solidity,
+.language-sol {
+    --lang-color: hsl(220, 15%, 55%);
+}
+
+.language-terraform,
+.language-hcl,
+.language-tf {
+    --lang-color: hsl(275, 55%, 60%);
+}
+
+.language-makefile,
+.language-make {
+    --lang-color: hsl(140, 55%, 55%);
+}
+
+.language-cmake {
+    --lang-color: hsl(20, 75%, 60%);
+}
+
+.language-text,
+.language-plaintext,
+.language-txt,
+.language-console,
+.language-terminal,
+.language-output {
+    --lang-color: hsl(220, 10%, 60%);
+}

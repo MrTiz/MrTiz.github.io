@@ -1,0 +1,9 @@
+# If you discover a security issue affecting this site, or want to reach
+# me about anything security-related regarding my published research,
+# please use one of the channels below. Report responsibly.
+
+Contact: https://github.com/MrTiz/MrTiz.github.io/security/advisories/new
+Contact: https://www.linkedin.com/in/tiziano-marra
+Expires: 2027-07-19T00:00:00.000Z
+Preferred-Languages: en, it
+Canonical: https://mrtiz.github.io/.well-known/security.txt

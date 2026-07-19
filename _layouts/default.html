@@ -1,38 +1,36 @@
-<!DOCTYPE html>
-<html lang="{{ site.lang | default: "en-US" }}">
+<!doctype html>
+<html lang="{{ page.lang | default: site.lang | default: 'en-US' }}">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
-    {% include head-custom.html %}
-
-{% seo %}
-    <meta name="google-site-verification" content="-_NZS_iuutWSGxvJ7nmuRWH7ggq7jZ8nNA3UsoSIhwk" />
+    {%- include head.html -%}
   </head>
-
   <body>
+    {%- include header.html -%}
 
-    <header>
-      <div class="container">
-        <a id="a-title" href="{{ '/' | relative_url }}">
-          <h1>{{ site.title | default: site.github.repository_name }}</h1>
-        </a>
-        <h2>{{ site.description | default: site.github.project_tagline }}</h2>
+    <main class="site-main" id="main">
+      <div class="container">{{ content }}</div>
+    </main>
 
-        <section id="downloads">
-          {% if site.show_downloads %}
-            <a href="{{ site.github.zip_url }}" class="btn">Download as .zip</a>
-            <a href="{{ site.github.tar_url }}" class="btn">Download as .tar.gz</a>
-          {% endif %}
-        </section>
-      </div>
-    </header>
+    {%- include footer.html -%}
 
-    <div class="container">
-      <section id="main_content">
-        {{ content }}
-      </section>
-    </div>
+    <script
+      src="{{ '/assets/js/theme-toggle.js' | relative_url }}"
+      defer
+    ></script>
+    <script src="{{ '/assets/js/copy-code.js' | relative_url }}" defer></script>
+    <script
+      src="{{ '/assets/js/external-links.js' | relative_url }}"
+      defer
+    ></script>
+    <script
+      src="{{ '/assets/js/prefetch-hover.js' | relative_url }}"
+      defer
+    ></script>
+    {%- if page.layout == 'post' -%}
+    <script src="{{ '/assets/js/toc.js' | relative_url }}" defer></script>
+    {%- endif -%}
+    <script
+      src="{{ '/assets/js/scroll-header.js' | relative_url }}"
+      defer
+    ></script>
   </body>
 </html>

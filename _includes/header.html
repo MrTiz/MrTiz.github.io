@@ -1,0 +1,106 @@
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" id="site-header">
+  <div class="container site-header__inner">
+    <a class="brand" href="{{ '/' | relative_url }}" aria-label="{{ site.title | escape }} home">
+      <span class="brand__mark" aria-hidden="true">//</span>
+      <span class="brand__text">MrTiz</span>
+    </a>
+
+    <nav class="site-nav" aria-label="Primary">
+      <ul class="site-nav__links">
+        {%- assign current = page.url -%}
+        <li>
+          <a class="site-nav__link"
+             href="{{ '/' | relative_url }}"
+             {% if current == '/' %}aria-current="page"{% endif %}>
+            <svg class="site-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Home</span>
+          </a>
+        </li>
+        <li>
+          <a class="site-nav__link"
+             href="{{ '/tags/' | relative_url }}"
+             {% if current contains '/tags' %}aria-current="page"{% endif %}>
+            <svg class="site-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+            <span>Tags</span>
+          </a>
+        </li>
+        <li>
+          <a class="site-nav__link"
+             href="{{ '/about/' | relative_url }}"
+             {% if current contains '/about' %}aria-current="page"{% endif %}>
+            <svg class="site-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>About</span>
+          </a>
+        </li>
+        <li>
+          <a class="site-nav__link site-nav__link--rss"
+             href="{{ '/feed.xml' | relative_url }}"
+             title="RSS feed"
+             target="_blank">
+            <svg class="site-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/>
+              <circle cx="5" cy="19" r="1"/>
+            </svg>
+            <span>RSS</span>
+          </a>
+        </li>
+      </ul>
+
+      <button class="site-nav__icon-btn theme-toggle"
+              type="button"
+              id="theme-toggle"
+              aria-label="Toggle color theme"
+              title="Toggle color theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+
+      {%- if page.layout == 'post' -%}
+      <button class="site-nav__icon-btn site-nav__toc-toggle"
+              type="button"
+              id="toc-toggle-btn"
+              aria-label="Table of contents"
+              aria-expanded="false"
+              aria-controls="toc-panel"
+              hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </button>
+      {%- endif -%}
+    </nav>
+  </div>
+
+  {%- if page.layout == 'post' -%}
+  <!-- Mobile TOC dropdown -->
+  <div class="toc-panel" id="toc-panel" hidden aria-labelledby="toc-toggle-btn">
+    <div class="container">
+      <div class="toc-panel__inner">
+        <ol class="toc-panel__list" id="toc-panel-list">
+          <!-- populated by toc.js -->
+        </ol>
+      </div>
+    </div>
+  </div>
+  {%- endif -%}
+</header>
+{%- if page.layout == 'post' -%}
+<div class="toc-panel__backdrop" id="toc-panel-backdrop" hidden></div>
+{%- endif -%}

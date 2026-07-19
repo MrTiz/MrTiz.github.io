@@ -1,0 +1,50 @@
+---
+layout: default
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <span class="hero__eyebrow">Live &middot; Cybersecurity research</span>
+  <h1 id="hero-title" class="hero__title">
+    Deep dives into<br />
+    <span class="accent">offensive security</span>
+  </h1>
+  <p class="hero__lede">{{ site.description }}</p>
+  <div class="hero__actions">
+    <a class="btn btn--primary" href="#posts">
+      Read the posts
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <line x1="5" y1="12" x2="19" y2="12" />
+        <polyline points="12 5 19 12 12 19" />
+      </svg>
+    </a>
+    <a class="btn btn--ghost" href="{{ '/about/' | relative_url }}">About me</a>
+  </div>
+</section>
+
+<section id="posts" aria-labelledby="posts-title">
+  <header class="section-head">
+    <h2 id="posts-title" class="section-head__title">Recent posts</h2>
+    <span class="section-head__meta"
+      >{{ site.posts.size }} write-up{% if site.posts.size != 1 %}s{% endif
+      %}</span
+    >
+  </header>
+
+  {%- if site.posts.size > 0 -%}
+  <ul class="post-list">
+    {%- for post in site.posts -%}
+    <li>{%- include post-card.html post=post -%}</li>
+    {%- endfor -%}
+  </ul>
+  {%- else -%}
+  <p class="text-muted">No posts yet. Check back soon.</p>
+  {%- endif -%} {{ content }}
+</section>

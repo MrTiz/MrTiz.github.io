@@ -1,0 +1,152 @@
+// Design tokens — colours, typography, spacing, radii, motion.
+// Exposed as CSS custom props, swapped by [data-theme].
+// Uses comma-separated hsl() for libsass 3.x compat.
+
+:root {
+    // Typography
+    --font-sans:
+        "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji";
+
+    // Self-hosted, proper single-cell width for box-drawing chars
+    --font-mono:
+        "Cascadia Code", "Cascadia Mono", ui-monospace, "SF Mono", "SFMono-Regular",
+        "Menlo", "Consolas", "Liberation Mono", monospace;
+
+    // Fluid type scale
+    --step--2: clamp(0.75rem, 0.72rem + 0.15vw, 0.82rem);
+    --step--1: clamp(0.83rem, 0.80rem + 0.18vw, 0.92rem);
+    --step-0: clamp(0.96rem, 0.92rem + 0.22vw, 1.05rem);
+    --step-1: clamp(1.10rem, 1.03rem + 0.35vw, 1.25rem);
+    --step-2: clamp(1.30rem, 1.20rem + 0.55vw, 1.55rem);
+    --step-3: clamp(1.55rem, 1.35rem + 1.00vw, 1.95rem);
+    --step-4: clamp(1.85rem, 1.55rem + 1.60vw, 2.55rem);
+    --step-5: clamp(2.20rem, 1.75rem + 2.30vw, 3.30rem);
+
+    --lh-tight: 1.15;
+    --lh-snug: 1.35;
+    --lh-body: 1.7;
+
+    // Spacing
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+    --space-7: 3rem;
+    --space-8: 4rem;
+    --space-9: 6rem;
+
+    // Radii
+    --radius-1: 4px;
+    --radius-2: 8px;
+    --radius-3: 12px;
+    --radius-4: 16px;
+    --radius-pill: 999px;
+
+    // Layout
+    --container: 100%;
+    --container-pad: clamp(1rem, 3vw, 3rem);
+    --content: 60rem; // reading measure (no sidebar)
+    --article: none;
+    --sidebar: 18rem;
+    --grid-gap: 3.5rem;
+
+    // Motion
+    --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --dur-1: 120ms;
+    --dur-2: 220ms;
+    --dur-3: 320ms;
+
+    // Shadows
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.15);
+    --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.2);
+    --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.28);
+
+    // Focus ring
+    --ring-width: 2px;
+    --ring-offset: 2px;
+}
+
+// Dark (default)
+:root,
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg-0: hsl(220, 15%, 7%); // page
+    --bg-1: hsl(220, 15%, 10%); // section
+    --bg-2: hsl(220, 14%, 13%); // card
+    --bg-3: hsl(220, 13%, 17%); // code / pill
+    --bg-4: hsl(220, 12%, 22%); // input / hover
+
+    --border-1: hsl(220, 12%, 20%);
+    --border-2: hsl(220, 12%, 28%);
+
+    --fg-0: hsl(210, 20%, 97%); // headings
+    --fg-1: hsl(220, 15%, 88%); // body
+    --fg-2: hsl(220, 10%, 68%); // secondary
+    --fg-3: hsl(220, 8%, 50%); // muted
+
+    --accent: hsl(190, 90%, 60%);
+    --accent-hover: hsl(190, 95%, 72%);
+    --accent-soft: hsla(190, 60%, 20%, 0.6);
+
+    --link: var(--accent);
+    --link-hover: var(--accent-hover);
+
+    --tag-bg: hsl(220, 15%, 15%);
+    --tag-fg: hsl(220, 12%, 78%);
+    --tag-bg-hover: hsl(190, 60%, 20%);
+    --tag-fg-hover: var(--accent-hover);
+
+    --success: hsl(150, 60%, 55%);
+    --warning: hsl(35, 90%, 65%);
+    --danger: hsl(0, 75%, 65%);
+
+    --selection-bg: hsla(190, 90%, 60%, 0.28);
+    --selection-fg: hsl(210, 20%, 98%);
+
+    --shadow-glow: 0 0 0 1px hsl(220, 12%, 28%);
+}
+
+// Light (opt-in via toggle, no prefers-color-scheme fallback)
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    --bg-0: hsl(0, 0%, 100%);
+    --bg-1: hsl(220, 20%, 98.5%);
+    --bg-2: hsl(220, 20%, 96%);
+    --bg-3: hsl(220, 18%, 93%);
+    --bg-4: hsl(220, 15%, 88%);
+
+    --border-1: hsl(220, 15%, 88%);
+    --border-2: hsl(220, 15%, 78%);
+
+    --fg-0: hsl(220, 25%, 10%);
+    --fg-1: hsl(220, 20%, 22%);
+    --fg-2: hsl(220, 12%, 42%);
+    --fg-3: hsl(220, 8%, 58%);
+
+    --accent: hsl(195, 90%, 36%);
+    --accent-hover: hsl(195, 95%, 28%);
+    --accent-soft: hsl(195, 80%, 90%);
+
+    --link: var(--accent);
+    --link-hover: var(--accent-hover);
+
+    --tag-bg: hsl(220, 20%, 94%);
+    --tag-fg: hsl(220, 15%, 30%);
+    --tag-bg-hover: hsl(195, 80%, 92%);
+    --tag-fg-hover: var(--accent-hover);
+
+    --success: hsl(150, 65%, 32%);
+    --warning: hsl(30, 90%, 42%);
+    --danger: hsl(0, 75%, 45%);
+
+    --selection-bg: hsla(195, 90%, 36%, 0.20);
+    --selection-fg: hsl(220, 25%, 10%);
+
+    --shadow-glow: 0 0 0 1px hsl(220, 15%, 82%);
+}

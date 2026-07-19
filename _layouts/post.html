@@ -1,0 +1,100 @@
+---
+layout: default
+---
+
+<article class="post">
+  <div class="post__main">
+    <header class="post__header">
+      <span class="post__eyebrow">Write-up</span>
+      <h1 class="post__title">{{ page.title | escape }}</h1>
+      {%- include post-meta.html post=page -%}
+    </header>
+
+    <div class="post__body">
+      <div class="post__content" id="post-content">{{ content }}</div>
+
+      <aside class="toc" id="toc" aria-label="Table of contents">
+        <details class="toc__wrap" id="toc-details">
+          <summary class="toc__summary">
+            <svg
+              class="toc__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+            <span class="toc__label">Table of contents</span>
+            <svg
+              class="toc__chevron"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </summary>
+          <ol class="toc__list" id="toc-list">
+            <!-- populated by toc.js -->
+          </ol>
+        </details>
+      </aside>
+    </div>
+
+    <footer class="post__footer">
+      {%- if page.tags and page.tags.size > 0 -%}
+      <span class="post__footer__tags-label">Tags</span>
+      <ul class="tag-list">
+        {%- for tag in page.tags -%}
+        <li>
+          <a class="tag" href="{{ '/tags/#' | append: tag | relative_url }}"
+            >{{ tag }}</a
+          >
+        </li>
+        {%- endfor -%}
+      </ul>
+      {%- endif -%} {%- if page.previous or page.next -%}
+      <nav class="post-nav" aria-label="Post navigation">
+        {%- if page.previous -%}
+        <a
+          class="post-nav__link post-nav__link--prev"
+          href="{{ page.previous.url | relative_url }}"
+          rel="prev"
+        >
+          <span class="post-nav__dir">&larr; Previous</span>
+          <span class="post-nav__title"
+            >{{ page.previous.title | escape }}</span
+          >
+        </a>
+        {%- else -%}
+        <span></span>
+        {%- endif -%} {%- if page.next -%}
+        <a
+          class="post-nav__link post-nav__link--next"
+          href="{{ page.next.url | relative_url }}"
+          rel="next"
+        >
+          <span class="post-nav__dir">Next &rarr;</span>
+          <span class="post-nav__title">{{ page.next.title | escape }}</span>
+        </a>
+        {%- else -%}
+        <span></span>
+        {%- endif -%}
+      </nav>
+      {%- endif -%}
+    </footer>
+  </div>
+</article>

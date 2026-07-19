@@ -1,0 +1,105 @@
+// Homepage styles.
+
+.hero {
+    padding: var(--space-8) 0 var(--space-7);
+    border-bottom: 1px solid var(--border-1);
+    margin-bottom: var(--space-8);
+}
+
+.hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    font-weight: 500;
+    margin-bottom: var(--space-5);
+    border: 1px solid color-mix(in oklch, var(--accent) 25%, transparent);
+}
+
+.hero__eyebrow::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.hero__title {
+    font-size: var(--step-5);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--fg-0);
+    max-width: 22ch;
+    margin-bottom: var(--space-5);
+}
+
+.hero__title .accent {
+    color: var(--accent);
+}
+
+.hero__lede {
+    font-size: var(--step-2);
+    color: var(--fg-2);
+    max-width: 62ch;
+    line-height: 1.45;
+    font-weight: 400;
+}
+
+.hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+}
+
+// --- Section heading ---
+.section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+    padding: 0 0 var(--space-3);
+    border-bottom: 1px solid var(--border-1);
+}
+
+.section-head__title {
+    font-size: var(--step-3);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    color: var(--fg-0);
+}
+
+.section-head__title::before {
+    content: "//";
+    color: var(--accent);
+    font-family: var(--font-mono);
+    margin-right: 0.5em;
+    font-weight: 500;
+}
+
+.section-head__meta {
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    color: var(--fg-3);
+}

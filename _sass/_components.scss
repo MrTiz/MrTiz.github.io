@@ -1,0 +1,431 @@
+// Reusable UI components.
+
+// --- Tag chips ---
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.22em 0.72em;
+    border-radius: var(--radius-pill);
+    background: var(--tag-bg);
+    color: var(--tag-fg);
+    font-size: var(--step--2);
+    font-weight: 500;
+    line-height: 1.5;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+    font-family: var(--font-mono);
+    font-feature-settings: "liga" 0;
+    letter-spacing: -0.01em;
+    white-space: nowrap; // prevent hyphen-break in kebab-case names
+    flex-shrink: 0;
+}
+
+.tag:hover {
+    background: var(--tag-bg-hover);
+    color: var(--tag-fg-hover);
+}
+
+.tag::before {
+    content: "#";
+    color: var(--fg-3);
+    font-weight: 400;
+}
+
+.tag:hover::before {
+    color: var(--tag-fg-hover);
+    opacity: 0.7;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.4rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tag-list li {
+    margin: 0;
+}
+
+// --- Post cards ---
+.post-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    background: var(--bg-1);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-3);
+    transition: border-color var(--dur-2) var(--ease),
+        background var(--dur-2) var(--ease),
+        transform var(--dur-2) var(--ease);
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.post-card__top {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.post-card:hover {
+    border-color: var(--border-2);
+    background: var(--bg-2);
+    transform: translateY(-2px);
+}
+
+.post-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--fg-2);
+    font-size: var(--step--2);
+    font-family: var(--font-mono);
+    letter-spacing: -0.01em;
+}
+
+.post-card__meta>* {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+}
+
+.post-card__dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--fg-3);
+}
+
+.post-card__title {
+    font-size: var(--step-2);
+    font-weight: 650;
+    color: var(--fg-0);
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    // Reserve 2 lines so cards in the same row stay aligned
+    min-height: calc(1.25em * 2);
+}
+
+.post-card__title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.post-card__title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.post-card:hover .post-card__title {
+    color: var(--accent-hover);
+}
+
+.post-card__excerpt {
+    color: var(--fg-2);
+    font-size: var(--step-0);
+    line-height: var(--lh-snug);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+}
+
+.post-card__tags {
+    position: relative;
+    z-index: 1;
+    padding-top: var(--space-2);
+    // Single row only — clips instead of wrapping so cards stay aligned
+    flex-wrap: nowrap;
+    overflow: hidden;
+    max-height: 2.6rem;
+    mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent 100%);
+}
+
+// Card grid. Negative margin extends cards into the container padding
+// so card *content* aligns flush with the rest of the page.
+.post-list {
+    display: grid;
+    gap: var(--space-5);
+    grid-template-columns: 1fr;
+    list-style: none;
+    padding: 0;
+    margin: 0 calc(var(--space-5) * -1);
+}
+
+.post-list>li {
+    display: flex;
+}
+
+.post-list>li>.post-card {
+    flex: 1;
+}
+
+@media (min-width: 780px) {
+    .post-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+// --- Buttons ---
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.65em 1.15em;
+    border-radius: var(--radius-2);
+    font-size: var(--step-0);
+    font-weight: 550;
+    line-height: 1;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition: all var(--dur-1) var(--ease);
+    white-space: nowrap;
+}
+
+.btn--primary {
+    background: var(--accent);
+    color: var(--bg-0);
+}
+
+.btn--primary:hover {
+    background: var(--accent-hover);
+    color: var(--bg-0);
+    transform: translateY(-1px);
+}
+
+.btn--ghost {
+    color: var(--fg-1);
+    border-color: var(--border-2);
+}
+
+.btn--ghost:hover {
+    background: var(--bg-2);
+    color: var(--fg-0);
+}
+
+.btn svg {
+    width: 1em;
+    height: 1em;
+}
+
+// --- About page ---
+.about-intro {
+    margin-block: var(--space-4) var(--space-7);
+}
+
+.about-intro__lede {
+    font-size: var(--step-1);
+    color: var(--fg-0);
+    line-height: 1.5;
+    margin-bottom: var(--space-4);
+}
+
+.about-cards {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: 1fr;
+    margin-block: var(--space-5) var(--space-7);
+}
+
+@media (min-width: 720px) {
+    .about-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.about-cards .about-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-1);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-3);
+    padding: var(--space-5);
+    transition: border-color var(--dur-2) var(--ease),
+        background var(--dur-2) var(--ease),
+        transform var(--dur-2) var(--ease);
+}
+
+.about-cards .about-card:hover {
+    border-color: var(--border-2);
+    background: var(--bg-2);
+    transform: translateY(-2px);
+}
+
+.about-cards .about-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-2);
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-bottom: var(--space-3);
+}
+
+.about-cards .about-card__icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.about-cards .about-card__title {
+    font-size: var(--step-1);
+    font-weight: 650;
+    color: var(--fg-0);
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin: 0 0 var(--space-2);
+    min-height: calc(1.25em * 2);
+}
+
+.about-cards .about-card p {
+    color: var(--fg-2);
+    font-size: var(--step-0);
+    line-height: var(--lh-snug);
+    margin: 0;
+}
+
+.about-links {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: 1fr;
+    list-style: none;
+    padding: 0;
+    margin: var(--space-5) 0 var(--space-6);
+}
+
+@media (min-width: 640px) {
+    .about-links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+// Prevent li+li margin from pushing grid cells down
+.post__content .about-links li,
+.post__content .about-links li+li {
+    margin: 0;
+}
+
+.about-links a {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-1);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-2);
+    color: var(--fg-1);
+    text-decoration: none;
+    transition: all var(--dur-1) var(--ease);
+    min-width: 0;
+}
+
+.about-links a:hover {
+    background: var(--bg-2);
+    border-color: var(--accent);
+    color: var(--fg-0);
+    transform: translateX(2px);
+}
+
+.about-links__icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    color: var(--fg-2);
+    transition: color var(--dur-1) var(--ease);
+}
+
+.about-links a:hover .about-links__icon {
+    color: var(--accent);
+}
+
+.about-links__label {
+    font-weight: 600;
+    color: var(--fg-0);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.about-links__handle {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--fg-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// --- Disclaimer ---
+.disclaimer {
+    margin-block: var(--space-5) var(--space-7);
+    padding: var(--space-5) var(--space-6);
+    background: var(--bg-1);
+    border: 1px solid var(--border-1);
+    border-left: 3px solid var(--danger);
+    border-radius: var(--radius-2);
+    font-size: var(--step--1);
+    color: var(--fg-2);
+    line-height: var(--lh-body);
+}
+
+.disclaimer p+p {
+    margin-top: var(--space-3);
+}
+
+.disclaimer strong {
+    color: var(--fg-1);
+    font-weight: 600;
+}
+
+.disclaimer__lead {
+    font-size: var(--step-0);
+    color: var(--fg-0);
+}
+
+.disclaimer__lead strong {
+    color: var(--danger);
+}
+
+.disclaimer__closing {
+    margin-top: var(--space-4) !important;
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--border-1);
+    color: var(--fg-1);
+}
+
+// --- Skip link ---
+.skip-link {
+    position: absolute;
+    top: -3rem;
+    left: 1rem;
+    background: var(--accent);
+    color: var(--bg-0);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-2);
+    z-index: 100;
+    font-weight: 600;
+    transition: top var(--dur-2) var(--ease);
+}
+
+.skip-link:focus {
+    top: 0.75rem;
+}

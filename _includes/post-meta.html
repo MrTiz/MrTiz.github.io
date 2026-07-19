@@ -1,0 +1,61 @@
+{%- comment -%} Post meta line. Expects `include.post` or falls back to `page`.
+{%- endcomment -%} {%- assign post = include.post | default: page -%} {%- assign
+words = post.content | number_of_words -%} {%- assign reading_time = words |
+divided_by: 200.0 | ceil -%} {%- if reading_time < 1 -%}{%- assign reading_time
+= 1 -%}{%- endif -%}
+
+<div class="post__meta">
+  <span>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+    <time datetime="{{ post.date | date_to_xmlschema }}">
+      {{ post.date | date: "%B %d, %Y" }}
+    </time>
+  </span>
+
+  <span class="post__meta__dot" aria-hidden="true"></span>
+
+  <span>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+    {{ reading_time }} min read
+  </span>
+
+  <span class="post__meta__dot" aria-hidden="true"></span>
+
+  <span>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+    {{ post.author | default: site.author.name }}
+  </span>
+</div>

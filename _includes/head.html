@@ -1,0 +1,58 @@
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, viewport-fit=cover"
+/>
+<!-- Dark default, updated by theme-toggle.js if the user picks light -->
+<meta name="theme-color" content="#0f1218" id="theme-color-meta" />
+
+<!-- Cross-fade page transitions in Chromium; no-op in other browsers -->
+<meta name="view-transition" content="same-origin" />
+
+{%- if site.google_site_verification -%}
+<meta
+  name="google-site-verification"
+  content="{{ site.google_site_verification }}"
+/>
+{%- endif -%}
+
+<!-- Inline theme boot: applies saved theme before first paint to avoid FOUC -->
+<script>
+  (function () {
+    try {
+      var q = new URLSearchParams(location.search).get("theme");
+      if (q === "light" || q === "dark") {
+        document.documentElement.setAttribute("data-theme", q);
+        localStorage.setItem("theme", q);
+        return;
+      }
+      var saved = localStorage.getItem("theme");
+      document.documentElement.setAttribute(
+        "data-theme",
+        saved === "light" ? "light" : "dark",
+      );
+    } catch (_) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  })();
+</script>
+
+<link rel="icon" href="{{ '/favicon.ico' | relative_url }}" sizes="any" />
+<link rel="apple-touch-icon" href="{{ '/favicon.ico' | relative_url }}" />
+
+<link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}" />
+
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  title="{{ site.title }}"
+  href="{{ '/feed.xml' | relative_url }}"
+/>
+
+<!-- Custom <title> without the "| site.title" suffix that seo-tag would add -->
+{%- if page.url == "/" or page.title == nil -%}
+<title>{{ site.title | escape }}</title>
+{%- else -%}
+<title>{{ page.title | escape }}</title>
+{%- endif -%} {%- seo title=false -%}

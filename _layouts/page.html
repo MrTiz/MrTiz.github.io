@@ -1,0 +1,16 @@
+---
+layout: default
+---
+
+<article class="post is-page">
+  <div class="post__main">
+    <header class="post__header">
+      <h1 class="post__title">{{ page.title | escape }}</h1>
+      {%- if page.subtitle -%}
+      <p class="hero__lede">{{ page.subtitle }}</p>
+      {%- endif -%}
+    </header>
+
+    <div class="post__content">{{ content }}</div>
+  </div>
+</article>

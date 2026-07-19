@@ -1,0 +1,57 @@
+---
+layout: page
+title: Tags
+subtitle: Browse posts by topic.
+permalink: /tags/
+---
+
+{%- assign rawtags = "" -%}
+{%- for post in site.posts -%}
+  {%- for tag in post.tags -%}
+    {%- assign rawtags = rawtags | append: tag | append: "," -%}
+  {%- endfor -%}
+{%- endfor -%}
+
+{%- assign taglist = rawtags | split: "," | uniq | sort_natural -%}
+
+{%- if taglist.size > 0 -%}
+<div class="tags-cloud">
+  {%- for tag in taglist -%}
+    {%- if tag == "" -%}{%- continue -%}{%- endif -%}
+    {%- assign count = 0 -%}
+    {%- for post in site.posts -%}
+      {%- if post.tags contains tag -%}
+        {%- assign count = count | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+    <a class="tag" href="#{{ tag | slugify: 'raw' | url_encode }}">
+      {{ tag }}<span class="tag__count">&nbsp;·&nbsp;{{ count }}</span>
+    </a>
+  {%- endfor -%}
+</div>
+
+{%- for tag in taglist -%}
+  {%- if tag == "" -%}{%- continue -%}{%- endif -%}
+  {%- assign posts_with_tag = site.posts | where_exp: "p", "p.tags contains tag" -%}
+  <section class="tag-section" id="{{ tag | slugify: 'raw' | url_encode }}">
+    <header class="tag-section__head">
+      <h2 class="tag-section__title">{{ tag }}</h2>
+      <span class="tag-section__count">{{ posts_with_tag.size }} post{% if posts_with_tag.size != 1 %}s{% endif %}</span>
+    </header>
+    <ul class="tag-post-list">
+      {%- for post in posts_with_tag -%}
+        <li>
+          <time class="tag-post-list__date" datetime="{{ post.date | date_to_xmlschema }}">
+            {{ post.date | date: "%b %d, %Y" }}
+          </time>
+          <a class="tag-post-list__title" href="{{ post.url | relative_url }}">
+            {{ post.title | escape }}
+          </a>
+        </li>
+      {%- endfor -%}
+    </ul>
+  </section>
+{%- endfor -%}
+{%- else -%}
+<p class="text-muted">No tags yet.</p>
+{%- endif -%}

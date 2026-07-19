@@ -1,0 +1,21 @@
+---
+layout: page
+title: "404 - page not found"
+permalink: /404.html
+---
+
+<p style="font-family: var(--font-mono); color: var(--fg-3)">
+  $ curl -I {{ site.url }}{{ page.url }}
+</p>
+<p style="font-family: var(--font-mono); color: var(--danger)">
+  HTTP/1.1 404 Not Found
+</p>
+
+<p>The page you were looking for doesn't exist, or has been moved.</p>
+
+<p>
+  Head back to the <a href="{{ '/' | relative_url }}">homepage</a>, browse by
+  <a href="{{ '/tags/' | relative_url }}">tag</a>, or open an issue on
+  <a href="https://github.com/MrTiz/MrTiz.github.io/issues">GitHub</a> if you
+  think this is a broken link.
+</p>
