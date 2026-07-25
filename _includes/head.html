@@ -56,3 +56,12 @@
 {%- else -%}
 <title>{{ page.title | escape }}</title>
 {%- endif -%} {%- seo title=false -%}
+
+<!-- Extra OG image metadata: seo-tag emits only og:image when image: is a string. All OG assets are 1200x630 PNG -->
+{%- if page.image or site.image -%}
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:alt" content="{{ page.title | default: site.title | escape }}" />
+<meta name="twitter:image:alt" content="{{ page.title | default: site.title | escape }}" />
+{%- endif -%}

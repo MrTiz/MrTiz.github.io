@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+    <rect width="1200" height="630" fill="#0F1115"/>
+    <rect x="0" y="0" width="6" height="630" fill="#3DD6F5"/>
+
+    <rect x="728" y="200" width="400" height="240" fill="#16181D"/>
+    <line x1="728" y1="200" x2="728" y2="440" stroke="#3DD6F5" stroke-width="2" opacity="0.5"/>
+
+    <text x="72" y="118" font-family="Cascadia Code" font-size="20"><tspan fill="#3DD6F5">// MrTiz</tspan><tspan fill="#757C8A"> · offensive security research</tspan></text>
+
+    <text font-family="Inter" font-size="68" font-weight="700" fill="#F6F7F9" letter-spacing="-2">
+        <tspan x="72" y="290">Windows Defender</tspan>
+        <tspan x="72" dy="76">Evasion</tspan>
+    </text>
+
+    <text x="72" y="418" font-family="Inter" font-size="28" font-weight="600" fill="#A5ABB6" letter-spacing="-0.5">Shellter + HoaxShell on hardened Win 11</text>
+
+    <g font-family="Cascadia Code" font-size="19">
+        <text x="760" y="235" xml:space="preserve"><tspan fill="#E27883">Remove-Item</tspan><tspan fill="#A5ABB6"> -Path ((</tspan></text>
+        <text x="760" y="265" xml:space="preserve"><tspan fill="#A5ABB6">  </tspan><tspan fill="#7ECE98">'HKL'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'M:{0}'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'SOF'</tspan><tspan fill="#74D3E7">+</tspan></text>
+        <text x="760" y="295" xml:space="preserve"><tspan fill="#A5ABB6">  </tspan><tspan fill="#7ECE98">'TWARE{0}M'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'icro'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'sof'</tspan><tspan fill="#74D3E7">+</tspan></text>
+        <text x="760" y="325" xml:space="preserve"><tspan fill="#A5ABB6">  </tspan><tspan fill="#7ECE98">'t{0}'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'A'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'MSI{'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'0}Pr'</tspan><tspan fill="#74D3E7">+</tspan></text>
+        <text x="760" y="355" xml:space="preserve"><tspan fill="#A5ABB6">  </tspan><tspan fill="#7ECE98">'o'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'viders*{'</tspan><tspan fill="#74D3E7">+</tspan><tspan fill="#7ECE98">'0}*'</tspan><tspan fill="#A5ABB6">)</tspan></text>
+        <text x="760" y="385" xml:space="preserve"><tspan fill="#A5ABB6">  </tspan><tspan fill="#74D3E7">-f</tspan><tspan fill="#A5ABB6"> </tspan><tspan fill="#E27883">[cHAR]</tspan><tspan fill="#F2A15A">92</tspan><tspan fill="#A5ABB6">) -Force</tspan></text>
+        <text x="760" y="415" xml:space="preserve"><tspan fill="#A5ABB6">    -ea SilentlyContinue</tspan></text>
+    </g>
+
+    <line x1="72" y1="555" x2="1128" y2="555" stroke="#2D3139" stroke-width="1"/>
+
+    <text x="72" y="588" font-family="Cascadia Code" font-size="17" fill="#A5ABB6">25 min · evasion · defender · shellter · hoaxshell</text>
+    <text x="1128" y="588" font-family="Cascadia Code" font-size="17" fill="#3DD6F5" text-anchor="end">mrtiz.github.io</text>
+</svg>

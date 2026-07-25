@@ -4,6 +4,7 @@ title: "Bypassing Windows Defender on Windows 11 using Shellter and HoaxShell"
 description: "Chaining Shellter Pro's AV/EDR evasion with HoaxShell's HTTP-based C2 to land a fully undetected reverse shell on a Windows 11 target."
 date: 2025-06-23
 permalink: /defender-evasion-shellter-hoaxshell
+image: /assets/og/defender-evasion-shellter-hoaxshell.png
 lang: en
 tags: [evasion, defender, shellter, hoaxshell, AMSI, UAC, bypass]
 ---

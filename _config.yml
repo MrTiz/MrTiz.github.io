@@ -4,6 +4,7 @@ description: >-
   internals write-ups by Tiziano Marra
 url: https://mrtiz.github.io
 baseurl: ""
+image: /assets/og/default.png
 lang: en-US
 timezone: Europe/Rome
 
@@ -15,7 +16,7 @@ author:
 
 twitter:
   username: _MrTiz
-  card: summary
+  card: summary_large_image
 
 social:
   github:      https://github.com/MrTiz

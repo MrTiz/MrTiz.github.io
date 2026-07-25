@@ -4,6 +4,7 @@ title: "CET-Compliant Callstack Spoofing via Thread Pool Enum Callback Trampolin
 description: "A CET-compliant callstack spoofing technique that uses Windows thread-pool enum callbacks as syscall trampolines, defeating EDR stack telemetry without breaking Intel shadow-stack invariants."
 date: 2026-07-12
 permalink: /cet-callstack-spoofing-thread-pool-trampoline
+image: /assets/og/cet-callstack-spoofing-thread-pool-trampoline.png
 lang: en
 tags: [malware-dev, red-teaming, evasion, edr-evasion, cet, intel-cet, shadow-stack, hardware-mitigations, callstack-spoofing, stack-spoofing, indirect-syscalls, direct-syscalls, thread-pool, thread-pool-api, enum-callback, trampolining, windows-internals, winapi, x64-assembly, rtlvirtualunwind, rust, rustsec, infosec, offensive-security]
 ---
@@ -48,9 +49,10 @@ tags: [malware-dev, red-teaming, evasion, edr-evasion, cet, intel-cet, shadow-st
   - [5.7 A Note on `RAX`: You Can't Get It Back](#57-a-note-on-rax-you-cant-get-it-back)
 - [6. CET Compliance: The Core Contribution](#6-cet-compliance-the-core-contribution)
   - [6.1 Why Traditional Spoofing Breaks Under CET](#61-why-traditional-spoofing-breaks-under-cet)
-  - [6.2 `JMP` Instead of RET](#62-jmp-instead-of-ret)
+  - [6.2 `JMP` Instead of `RET`](#62-jmp-instead-of-ret)
   - [6.3 Shadow Stack Pointer Reconciliation](#63-shadow-stack-pointer-reconciliation)
   - [6.4 Build Configuration for CET](#64-build-configuration-for-cet)
+  - [6.5 A Note on CFG Compatibility](#65-a-note-on-cfg-compatibility)
 - [7. The 39 Enum Functions](#7-the-39-enum-functions)
   - [7.1 The Complete List](#71-the-complete-list)
   - [7.2 Why These Functions Work](#72-why-these-functions-work)
@@ -178,7 +180,7 @@ The first research specifically targeting CET compliance was [BYOUD (Bring Your 
 I took a different route: instead of touching unwind metadata, I achieve CET compliance through two things:
 
 1. Using `jmp` instead of `ret` for context switches (the shadow stack is not involved in `jmp`)
-2. Directly advancing the Shadow Stack Pointer via `RDSSPQ`/`INCSSPQ` to realign it
+2. Directly advancing the Shadow Stack Pointer via `RDSSPQ` and `INCSSPQ` (the CET user-mode shadow-stack instructions, detailed in [Section 3.7](#37-intel-cet-and-the-shadow-stack)) to realign it
 
 Combined with thread pool + enum callback trampolining that produces a genuinely clean call stack (not synthetic frames but actual function calls).
 
@@ -849,7 +851,7 @@ fake_addr != real_addr → #CP fault → crash
 
 The shadow stack is hardware-protected. You can't write to it with `mov`. It's over for traditional spoofing.
 
-### 6.2 `JMP` Instead of RET
+### 6.2 `JMP` Instead of `RET`
 
 My context switch uses `jmp r11` instead of `ret`.
 
@@ -954,6 +956,16 @@ If the technique had a CET bug, the process would crash during testing. It doesn
     <br>
     <em>PE DLL Characteristics</em>
 </p>
+
+### 6.5 A Note on CFG Compatibility
+
+CET is not the only control-flow integrity mitigation on modern Windows. **Control Flow Guard** (CFG) protects indirect calls: before an indirect `call [reg]` executes, the compiler-injected `_guard_check_icall` verifies that the target is in the bitmap of allowed function entry points. If not, the process dies.
+
+This technique never runs into CFG. Every real call is a direct call to an exported API (`SubmitThreadpoolWork`, `WaitForThreadpoolWorkCallbacks`, `EnumSystemLocalesEx`) and those are CFG-valid targets by construction. The interesting redirects, the ones that would look suspicious to CFG, are done with `jmp`, not `call`. CFG doesn't touch `jmp`.
+
+Extended Flow Guard (xFG) does cover certain indirect `jmp` targets, but it's not universally deployed and my `jmp` destinations are legitimate offsets inside signed Microsoft modules. Returns are covered by CET, which the technique explicitly reconciles.
+
+This is an accidental property, not a design goal. The reason for `jmp` instead of `call` was that `call` would push a return address on the shadow stack that I don't want there. That the same choice also sidesteps CFG is a free win.
 
 ---
 
@@ -1207,7 +1219,7 @@ The technique produces a clean-looking stack, but it's not invisible. This secti
 
 ### 11.1 TEB ArbitraryUserPointer Monitoring
 
-The technique writes to `TEB+0x28`. Monitoring writes to this field (hardware watchpoints, periodic sampling) could flag suspicious values, especially pointers to stack memory matching the `EmbeddedContext` layout.
+The PoC writes to `TEB+0x28`, so a hardware watchpoint or periodic sampling on that field would flag it, especially if the value looks like a pointer to stack memory shaped like the `EmbeddedContext` layout. But this is signature-quality detection, not concept-quality. The technique only needs *some* per-thread channel to pass the context pointer from Phase 1 to Phase 2, and `ArbitraryUserPointer` is just the most convenient one. A trivial rewrite could use a compiler-generated TLS variable, `TlsAlloc`, a static in `.data`, a heap allocation, or a known offset on the stack. Building a detector around `TEB+0x28` catches this specific binary, not the class of technique it belongs to.
 
 ### 11.2 Shadow Stack vs. Normal Stack Divergence
 
@@ -1216,6 +1228,8 @@ On CET systems, between the `jmp` and the eventual `ret` in the trampoline, the 
 ### 11.3 Heuristic Call Stack Analysis
 
 `NtProtectVirtualMemory` being called from inside `Internal_EnumSystemLocales` is not normal. EDRs could whitelist "expected" `syscall` call chains and flag deviations. Machine learning models trained on normal stacks could spot anomalies.
+
+Conceptually this is the strongest countermeasure on the list. In practice it's also the most expensive one to build correctly. At the moment of the `syscall` trap, the kernel sees raw return addresses, not function names. Mapping `ntdll+0x12345` back to `Internal_EnumSystemLocales` requires either private Microsoft symbols (not shipped, only partially available on the public symbol server) or a fingerprint database precomputed for every OS build and every patch level of every DLL you care about. The latter is what serious vendors like Elastic actually do, and it works, but it's a real engineering investment and it's version-brittle: every Patch Tuesday can shift offsets and force the fingerprint DB to be regenerated. The cheaper `module+offset` version loses the semantic layer and collapses back into statistical pattern matching.
 
 ### 11.4 Enum Callback Behavioral Analysis
 
@@ -1227,7 +1241,11 @@ Callbacks that fire during thread pool work items (unusual for locale enumeratio
 
 ### 11.6 `INCSSPQ` Instruction Monitoring
 
-`INCSSPQ`/`INCSSPD` are rarely used in normal code. Performance counters or instruction traces flagging frequent use could indicate shadow stack manipulation.
+`INCSSPQ` and `INCSSPD` are rarely used in normal code. A module that emits them outside of exception dispatch or unwind fixup deserves a second look. There's a big asymmetry, though, between catching these instructions on disk and catching them at runtime.
+
+**Static / on-disk scanning is viable.** The opcodes are fixed: `F3 48 0F AE E9` for `INCSSPQ rcx`, `F3 48 0F 1E C8` for `RDSSPQ rax`, with the usual register-encoding variants. Scanning `.text` at file drop or at load time is cheap and works exactly the same way EDRs already flag `0F 05` (`syscall`) inside modules that shouldn't contain it. Bypass is possible (opcode encryption, JIT emission, self-modifying code) but that's real complexity the attacker has to pay for.
+
+**Runtime detection is a different animal.** `INCSSPQ` is a usermode instruction. It doesn't trap into the kernel, so there is no natural choke point where an EDR can hook it. Doing it properly at runtime means either Intel Processor Trace (produces enormous packet volumes, has to be decoded offline, not something you deploy fleet-wide) or single-stepping via the trap flag (unusable). There is no dedicated performance counter for "CET instruction retired" that I know of, and even if there were, PMU sampling is statistical, not comprehensive. The static path is where realistic detection lives today.
 
 ---
 
