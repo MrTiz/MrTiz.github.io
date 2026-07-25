@@ -7,7 +7,7 @@
     if (!header) return;
 
     var DEEP_THRESHOLD = 1500;
-    var IDLE_TIMEOUT = 2000;
+    var IDLE_TIMEOUT = 1500;
     var root = document.documentElement;
     var raf = null;
     var idleTimer = null;

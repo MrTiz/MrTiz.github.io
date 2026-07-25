@@ -492,16 +492,28 @@ body[data-toc-open="true"] {
     opacity: 0.25;
 }
 
-.is-scrolled-deep.is-idle .scroll-top:hover,
 .is-scrolled-deep.is-idle .scroll-top:focus-visible,
 .is-scrolled-deep.is-idle .scroll-top:active {
     opacity: 1;
 }
 
-.scroll-top:hover,
 .scroll-top:focus-visible {
     color: var(--accent);
     border-color: var(--accent);
+}
+
+// Guard `:hover` styles behind (hover: hover) so touch devices don't get
+// stuck on the highlighted state after a tap (mobile browsers keep :hover
+// on the element until the user taps elsewhere; blur() only cleared :focus).
+@media (hover: hover) {
+    .is-scrolled-deep.is-idle .scroll-top:hover {
+        opacity: 1;
+    }
+
+    .scroll-top:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

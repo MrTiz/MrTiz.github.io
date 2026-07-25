@@ -107,7 +107,7 @@ Before diving in, let me give some context on how we got here. The cat-and-mouse
 For years, EDRs relied on user-mode API hooking. The EDR injects a DLL into every process, places trampolines at the beginning of sensitive `ntdll.dll` functions (`NtAllocateVirtualMemory`, `NtProtectVirtualMemory`, `NtWriteVirtualMemory`, etc.), and intercepts every call to inspect arguments before letting it through.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/user-mode-hooking.png" alt="User-mode hooking">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/user-mode-hooking.png" alt="User-mode hooking" width="1810" height="1087">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -117,7 +117,7 @@ The offensive response was **direct syscalls**: skip `ntdll.dll` entirely. Load 
 [SysWhispers](https://github.com/jthuraisamy/SysWhispers) by @jthuraisamy made this accessible by generating header/ASM stubs. [SysWhispers2](https://github.com/jthuraisamy/SysWhispers2) improved `SSN` resolution. Around the same time, [Hell's Gate](https://github.com/am0nsec/HellsGate) by am0nsec and smelly\_\_vx introduced dynamic `SSN` resolution by parsing `ntdll.dll` in memory. [Halo's Gate](https://blog.sektor7.net/#!res/2021/halosgate.md) and [Tartarus' Gate](https://github.com/trickster0/TartarusGate) by trickster0 handled cases where some stubs were hooked.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/direct_syscalls_principle.png" alt="Direct syscalls principle diagram">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/direct_syscalls_principle.png" alt="Direct syscalls principle diagram" width="1840" height="1078">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -143,7 +143,7 @@ The answer was **indirect syscalls**: instead of executing `syscall` from your c
 The immediate return address now points into `ntdll.dll`. Clean. But the rest of the stack still reveals the real caller. EDRs started walking deeper.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/indirect_syscalls_principle.png" alt="Indirect syscalls principle diagram">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/indirect_syscalls_principle.png" alt="Indirect syscalls principle diagram" width="1840" height="1078">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -161,7 +161,7 @@ Next step: forge the entire stack. Make every frame look legitimate. Several res
 All solid work. But they all share a problem: they manipulate return addresses on the normal stack. And then Intel dropped the bomb.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/call_stack_spoofing_theory.png" alt="Call stack spoofing">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/call_stack_spoofing_theory.png" alt="Call stack spoofing" width="788" height="425">
     <br>
     <em>Image credit: <a href="https://dtsec.us/2023-09-15-StackSpoofin/" target="_blank">dtsec.us</a></em>
 </p>
@@ -255,7 +255,7 @@ fn get_trampoline(func_addr: *mut u8) -> Result<u64, ()> {
 When I want to run the `syscall`, I load the `SSN` into `RAX`, arguments into the right registers, and jump to the trampoline. The kernel sees the return address pointing into `ntdll.dll`. Clean.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_trampoline_ssn.png" alt="x64dbg ZwProtectVirtualMemory disassembly">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_trampoline_ssn.png" alt="x64dbg ZwProtectVirtualMemory disassembly" width="1030" height="169">
     <br>
     <em>x64dbg ZwProtectVirtualMemory disassembly</em>
 </p>
@@ -343,7 +343,7 @@ There are however two user-mode instructions we can use:
 These are the foundation of my CET compliance strategy.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/fully_working_SSP_vs_CS.png" alt="Example of fully working Shadow Stack compared to normal call stack">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/fully_working_SSP_vs_CS.png" alt="Example of fully working Shadow Stack compared to normal call stack" width="657" height="329">
     <br>
     <em>Example of fully working Shadow Stack compared to normal call stack</em>
 </p>
@@ -437,7 +437,7 @@ We unwind our frame and redirect execution to `EnumSystemLocalesEx`. After the r
 Every single frame: `ntdll.dll`, `kernelbase.dll`, or `kernel32.dll`. No unbacked memory.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_callstack_ssp.png" alt="WinDbg callstack at the moment of syscall">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ZwProtectVirtualMemory_callstack_ssp.png" alt="WinDbg callstack at the moment of syscall" width="757" height="499">
     <br>
     <em>WinDbg callstack at the moment of syscall</em>
 </p>
@@ -459,7 +459,7 @@ ntdll!RtlUserThreadStart+2C
 `EnumSystemLocalesEx` (resolved from `kernelbase.dll`) internally calls `Internal_EnumSystemLocales`, which in turn calls our callback. Both frames are on the stack, both from `kernelbase.dll`.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/console_output.png" alt="Console output showing successful execution">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/console_output.png" alt="Console output showing successful execution" width="1137" height="639">
     <br>
     <em>Console output showing successful execution</em>
 </p>
@@ -882,7 +882,7 @@ In practice, the loop fires exactly once per context switch: it skips the one st
 When `user_mode_continue` starts executing, the normal stack (`RSP`) has not been shifted yet. The Shadow Stack Pointer (`SSP`) naturally points to the return address left by the `call user_mode_continue` instruction (in this case, back into `thread_pool_worker_enum`). You can see this stale entry at the top of the shadow stack:
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_before_incsspq.png" alt="Phase 1: Shadow stack before reconciliation">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_before_incsspq.png" alt="Phase 1: Shadow stack before reconciliation" width="759" height="459">
     <br>
     <em>Phase 1: Shadow stack before reconciliation</em>
 </p>
@@ -890,7 +890,7 @@ When `user_mode_continue` starts executing, the normal stack (`RSP`) has not bee
 However, our forged context (`new_rsp`) expects to return directly to `TppWorkpExecuteCallback`. The reconciliation loop compares the SSP entries against our target and executes `INCSSPQ`. This advances the SSP by 8 bytes, skipping the stale entry and aligning the shadow stack with our intended return address:
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_after_incsspq.png" alt="Phase 1: Shadow stack after reconciliation">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_1_ssp_after_incsspq.png" alt="Phase 1: Shadow stack after reconciliation" width="756" height="462">
     <br>
     <em>Phase 1: Shadow stack after reconciliation</em>
 </p>
@@ -900,7 +900,7 @@ However, our forged context (`new_rsp`) expects to return directly to `TppWorkpE
 The exact same mechanics apply during the second context switch. The `call user_mode_continue` from inside the enum callback pushes a return address (`manual_stack_unwind_enum+0x329`) onto the shadow stack. Since we are going to `jmp` to the syscall trampoline instead of returning, this entry is stale:
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_before_incsspq.png" alt="Phase 2: Shadow stack before reconciliation">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_before_incsspq.png" alt="Phase 2: Shadow stack before reconciliation" width="767" height="546">
     <br>
     <em>Phase 2: Shadow stack before reconciliation</em>
 </p>
@@ -908,7 +908,7 @@ The exact same mechanics apply during the second context switch. The `call user_
 The reconciliation loop finds the discrepancy and advances the SSP. The shadow stack now perfectly matches our forged target (`Internal_EnumSystemLocales+0x348`), ready for the syscall's `ret` instruction to pop it without raising a `#CP` fault:
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_after_incsspq.png" alt="Phase 2: Shadow stack after reconciliation">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/phase_2_ssp_after_incsspq.png" alt="Phase 2: Shadow stack after reconciliation" width="751" height="527">
     <br>
     <em>Phase 2: Shadow stack after reconciliation</em>
 </p>
@@ -916,7 +916,7 @@ The reconciliation loop finds the discrepancy and advances the SSP. The shadow s
 After the syscall is successfully executed, `ZwProtectVirtualMemory` correctly returns to `Internal_EnumSystemLocales`, proving that the callstack and the shadow stack are perfectly aligned with each other:
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ssp_vs_cs_after_syscall.png" alt="Shadow stack vs Normal stack after syscall">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/ssp_vs_cs_after_syscall.png" alt="Shadow stack vs Normal stack after syscall" width="780" height="477">
     <br>
     <em>Shadow stack vs Normal stack after syscall</em>
 </p>
@@ -951,7 +951,7 @@ rustflags = [
 If the technique had a CET bug, the process would crash during testing. It doesn't.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/PE_DLL_Characteristics.png" alt="PE DLL Characteristics">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/PE_DLL_Characteristics.png" alt="PE DLL Characteristics" width="490" height="242">
     <br>
     <em>PE DLL Characteristics</em>
 </p>
@@ -1163,7 +1163,7 @@ The reason this bug survived so long: the original `user_mode_continue` was `#[i
 The exception was at `ntdll!NtProtectVirtualMemory+0x14` (the `ret` after `syscall`). The callstack was perfect, every frame from a signed module. But the shadow stack was misaligned by 4 bytes, and CET didn't care how pretty the normal stack looked.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/STATUS_STACK_BUFFER_OVERRUN.png" alt="STATUS STACK BUFFER OVERRUN">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/STATUS_STACK_BUFFER_OVERRUN.png" alt="STATUS STACK BUFFER OVERRUN" width="827" height="494">
     <br>
     <em>STATUS STACK BUFFER OVERRUN</em>
 </p>
