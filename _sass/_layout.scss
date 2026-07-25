@@ -39,6 +39,27 @@
     border-bottom-color: var(--border-1);
 }
 
+// Header acts as a reading-progress scrubber: tap/drag anywhere on its
+// empty area seeks the page. `touch-action: none` keeps pointermove firing
+// during a touch drag — without it, mobile browsers hijack the pointer once
+// vertical movement is detected. Doesn't inherit to children, so brand/nav
+// buttons keep normal touch behavior.
+// `user-select: none` prevents the drag from selecting brand text / nav
+// labels as it sweeps across them. Inherits to all header children.
+.site-header {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+// Empty header area shows the pointer cursor to hint at seekability.
+// Interactive children (links, buttons) already have their own cursor.
+@media (hover: hover) {
+    .site-header {
+        cursor: pointer;
+    }
+}
+
 .site-header__inner {
     display: flex;
     align-items: center;
@@ -260,6 +281,24 @@
     justify-content: space-between;
     gap: var(--space-4);
     flex-wrap: wrap;
+}
+
+// On narrow screens force column stack + centered, otherwise `space-between`
+// pushes the two blocks to opposite edges and looks cramped.
+// 720px matches the mobile-nav breakpoint used elsewhere in this file.
+@media (max-width: 720px) {
+    .site-footer__inner {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .site-footer__copy {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.15rem;
+    }
 }
 
 .site-footer a {

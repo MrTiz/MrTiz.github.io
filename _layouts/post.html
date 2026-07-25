@@ -2,6 +2,59 @@
 layout: default
 ---
 
+{%- comment -%}
+    Rich JSON-LD emitted in addition to jekyll-seo-tag's minimal BlogPosting.
+    Google merges structured data at the same @id (page URL). This block adds
+    the fields seo-tag omits: ImageObject with dimensions, publisher, keywords,
+    wordCount, inLanguage — plus a BreadcrumbList for sitelink breadcrumbs.
+{%- endcomment -%}
+{%- assign og_image = page.image | default: site.image -%}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "BlogPosting",
+            "@id": "{{ page.url | absolute_url }}#post",
+            "url": "{{ page.url | absolute_url }}",
+            "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ page.url | absolute_url }}"},
+            "headline": {{ page.title | jsonify }},
+            "description": {{ page.description | strip_html | strip_newlines | jsonify }},
+            "datePublished": "{{ page.date | date_to_xmlschema }}",
+            "dateModified": "{{ page.last_modified_at | default: page.date | date_to_xmlschema }}",
+            "inLanguage": "{{ page.lang | default: site.lang }}",
+            "wordCount": {{ page.content | number_of_words }},
+            "keywords": {{ page.tags | join: ", " | jsonify }},
+            "image": {
+                "@type": "ImageObject",
+                "url": "{{ og_image | absolute_url }}",
+                "width": 1200,
+                "height": 630
+            },
+            "author": {
+                "@type": "Person",
+                "@id": "{{ site.author.url }}#person",
+                "name": {{ site.author.name | jsonify }},
+                "url": "{{ site.author.url }}"
+            },
+            "publisher": {
+                "@type": "Person",
+                "@id": "{{ site.author.url }}#person",
+                "name": {{ site.author.name | jsonify }},
+                "url": "{{ site.author.url }}"
+            }
+        },
+        {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ '/' | absolute_url }}"},
+                {"@type": "ListItem", "position": 2, "name": {{ page.title | jsonify }}, "item": "{{ page.url | absolute_url }}"}
+            ]
+        }
+    ]
+}
+</script>
+
 <article class="post">
     <div class="post__main">
         <header class="post__header">

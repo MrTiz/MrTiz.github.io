@@ -1,0 +1,9 @@
+---
+# Empty front matter forces Jekyll to process Liquid without applying a layout.
+layout: null
+sitemap: false
+---
+User-agent: *
+Allow: /
+
+Sitemap: {{ '/sitemap.xml' | absolute_url }}

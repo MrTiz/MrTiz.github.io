@@ -4,6 +4,9 @@
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
 />
+{%- if page.noindex -%}
+<meta name="robots" content="noindex, follow" />
+{%- endif -%}
 <!-- Dark default, updated by theme-toggle.js if the user picks light -->
 <meta name="theme-color" content="#0f1218" id="theme-color-meta" />
 

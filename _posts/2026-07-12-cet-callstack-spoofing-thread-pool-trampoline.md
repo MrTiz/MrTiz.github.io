@@ -5,7 +5,6 @@ description: "A CET-compliant callstack spoofing technique that uses Windows thr
 date: 2026-07-12
 permalink: /cet-callstack-spoofing-thread-pool-trampoline
 image: /assets/og/cet-callstack-spoofing-thread-pool-trampoline.png
-lang: en
 tags: [malware-dev, red-teaming, evasion, edr-evasion, cet, intel-cet, shadow-stack, hardware-mitigations, callstack-spoofing, stack-spoofing, indirect-syscalls, direct-syscalls, thread-pool, thread-pool-api, enum-callback, trampolining, windows-internals, winapi, x64-assembly, rtlvirtualunwind, rust, rustsec, infosec, offensive-security]
 ---
 
