@@ -41,6 +41,12 @@
 <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" sizes="any" />
 <link rel="apple-touch-icon" href="{{ '/favicon.ico' | relative_url }}" />
 
+<!-- Preload critical fonts before CSS parse; crossorigin required even same-origin, else browser double-fetches. Italics load on-demand via @font-face. -->
+<link rel="preload" href="{{ '/assets/fonts/InterVariable.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin fetchpriority="high" />
+{%- if page.layout == 'post' -%}
+<link rel="preload" href="{{ '/assets/fonts/cascadia-code.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin fetchpriority="high" />
+{%- endif -%}
+
 <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}" />
 
 <link
