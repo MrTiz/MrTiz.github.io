@@ -1,7 +1,7 @@
 title: Tiziano's Cybersecurity Blog
 description: >-
-  Cybersecurity research, red-team techniques, CVE deep-dives, and Windows
-  internals write-ups by Tiziano Marra
+    Cybersecurity research, red-team techniques, CVE deep-dives, and Windows
+    internals write-ups by Tiziano Marra
 url: https://mrtiz.github.io
 baseurl: ""
 image: /assets/og/default.png
@@ -9,62 +9,62 @@ lang: en-US
 timezone: Europe/Rome
 
 author:
-  name: Tiziano Marra
-  url: https://mrtiz.github.io/about/
-  github: MrTiz
-  twitter: _MrTiz
+    name: Tiziano Marra
+    url: https://mrtiz.github.io/about/
+    github: MrTiz
+    twitter: _MrTiz
 
 twitter:
-  username: _MrTiz
-  card: summary_large_image
+    username: _MrTiz
+    card: summary_large_image
 
 social:
-  github:      https://github.com/MrTiz
-  linkedin:    https://www.linkedin.com/in/tiziano-marra
-  twitter:     https://x.com/_MrTiz
-  hackthebox:  https://app.hackthebox.com/profile/193753
-  rss:         /feed.xml
+    github:      https://github.com/MrTiz
+    linkedin:    https://www.linkedin.com/in/tiziano-marra
+    twitter:     https://x.com/_MrTiz
+    hackthebox:  https://app.hackthebox.com/profile/193753
+    rss:         /feed.xml
 
 # Markdown / syntax highlighting
 markdown: kramdown
 highlighter: rouge
 kramdown:
-  input: GFM
-  hard_wrap: false
-  auto_ids: true
-  syntax_highlighter: rouge
-  syntax_highlighter_opts:
-    css_class: highlight
-    default_lang: text
-    span:
-      line_numbers: false
-    block:
-      line_numbers: true
-      start_line: 1
+    input: GFM
+    hard_wrap: false
+    auto_ids: true
+    syntax_highlighter: rouge
+    syntax_highlighter_opts:
+        css_class: highlight
+        default_lang: text
+        span:
+            line_numbers: false
+        block:
+            line_numbers: true
+            start_line: 1
 
 plugins:
-  - jekyll-feed
-  - jekyll-sitemap
-  - jekyll-seo-tag
+    - jekyll-feed
+    - jekyll-sitemap
+    - jekyll-seo-tag
 
 feed:
-  path: /feed.xml
+    path: /feed.xml
 
 # Front matter defaults
 # Don't set `author` here — jekyll-seo-tag would use the string as a
 # Twitter handle. Leaving it unset lets seo-tag use site.author instead.
 defaults:
-  - scope:
-      path: ""
-      type: posts
-    values:
-      layout: post
-      comments: false
-  - scope:
-      path: ""
-      type: pages
-    values:
-      layout: page
+    - scope:
+          path: ""
+          type: posts
+      values:
+          layout: post
+          comments: false
+    - scope:
+          path: ""
+          type: pages
+      values:
+          layout: page
 
 # Build
 permalink: /:title
@@ -73,25 +73,24 @@ future: false
 show_drafts: false
 
 sass:
-  style: compressed
-  sass_dir: _sass
+    style: compressed
+    sass_dir: _sass
 
 google_site_verification: "-_NZS_iuutWSGxvJ7nmuRWH7ggq7jZ8nNA3UsoSIhwk"
 
 # Jekyll skips dot-prefixed paths by default. `.well-known/` holds the
 # RFC 9116 security.txt, so include it explicitly in the built site.
 include:
-  - .well-known
+    - .well-known
 
 exclude:
-  - Gemfile
-  - Gemfile.lock
-  - vendor
-  - node_modules
-  - README.md
-  - LICENSE
-  - .bundle
-  - .sass-cache
-  - .jekyll-cache
-  - .jekyll-metadata
-  - scratchpad
+    - Gemfile
+    - Gemfile.lock
+    - vendor
+    - node_modules
+    - README.md
+    - LICENSE
+    - .bundle
+    - .sass-cache
+    - .jekyll-cache
+    - .jekyll-metadata

@@ -1,8 +1,8 @@
 <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 <meta
-  name="viewport"
-  content="width=device-width, initial-scale=1, viewport-fit=cover"
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
 />
 <!-- Dark default, updated by theme-toggle.js if the user picks light -->
 <meta name="theme-color" content="#0f1218" id="theme-color-meta" />
@@ -12,48 +12,51 @@
 
 {%- if site.google_site_verification -%}
 <meta
-  name="google-site-verification"
-  content="{{ site.google_site_verification }}"
+    name="google-site-verification"
+    content="{{ site.google_site_verification }}"
 />
 {%- endif -%}
 
 <!-- Inline theme boot: applies saved theme before first paint to avoid FOUC -->
 <script>
-  (function () {
-    try {
-      var q = new URLSearchParams(location.search).get("theme");
-      if (q === "light" || q === "dark") {
-        document.documentElement.setAttribute("data-theme", q);
-        localStorage.setItem("theme", q);
-        return;
-      }
-      var saved = localStorage.getItem("theme");
-      document.documentElement.setAttribute(
-        "data-theme",
-        saved === "light" ? "light" : "dark",
-      );
-    } catch (_) {
-      document.documentElement.setAttribute("data-theme", "dark");
-    }
-  })();
+    (function () {
+        try {
+            var q = new URLSearchParams(location.search).get("theme");
+            if (q === "light" || q === "dark") {
+                document.documentElement.setAttribute("data-theme", q);
+                localStorage.setItem("theme", q);
+                return;
+            }
+            var saved = localStorage.getItem("theme");
+            document.documentElement.setAttribute(
+                "data-theme",
+                saved === "light" ? "light" : "dark",
+            );
+        } catch (_) {
+            document.documentElement.setAttribute("data-theme", "dark");
+        }
+    })();
 </script>
 
 <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" sizes="any" />
 <link rel="apple-touch-icon" href="{{ '/favicon.ico' | relative_url }}" />
 
-<!-- Preload critical fonts before CSS parse; crossorigin required even same-origin, else browser double-fetches. Italics load on-demand via @font-face. -->
+<!-- Preload all four web fonts on every page. crossorigin is required even same-origin or the browser double-fetches; fetchpriority=high boosts them past images in the initial network queue. -->
 <link rel="preload" href="{{ '/assets/fonts/InterVariable.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin fetchpriority="high" />
-{%- if page.layout == 'post' -%}
+<link rel="preload" href="{{ '/assets/fonts/InterVariable-Italic.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin fetchpriority="high" />
 <link rel="preload" href="{{ '/assets/fonts/cascadia-code.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin fetchpriority="high" />
-{%- endif -%}
+<link rel="preload" href="{{ '/assets/fonts/cascadia-code-italic.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin fetchpriority="high" />
+
+<!-- Kill the browser default serif (Times New Roman on Windows) that would render during the ~2s window while style.css is still downloading on slow networks. Sans/monospace generics land immediately at HTML parse; style.css then upgrades to metric-adjusted fallbacks. -->
+<style>html{font-family:sans-serif}code,pre,kbd,samp,tt{font-family:monospace}</style>
 
 <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}" />
 
 <link
-  rel="alternate"
-  type="application/atom+xml"
-  title="{{ site.title }}"
-  href="{{ '/feed.xml' | relative_url }}"
+    rel="alternate"
+    type="application/atom+xml"
+    title="{{ site.title }}"
+    href="{{ '/feed.xml' | relative_url }}"
 />
 
 <!-- Custom <title> without the "| site.title" suffix that seo-tag would add -->

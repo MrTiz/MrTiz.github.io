@@ -20,6 +20,10 @@
     color: var(--fg-3);
 }
 
+.text-danger {
+    color: var(--danger);
+}
+
 .font-mono {
     font-family: var(--font-mono);
 }
@@ -42,12 +46,4 @@
 
 .mb-0 {
     margin-bottom: 0;
-}
-
-@media (max-width: 640px) {
-    .post__content table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
 }

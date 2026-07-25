@@ -11,6 +11,9 @@ Gemfile.lock
 vendor/
 .bundle/
 
+# Tools
+_tools/.capsize_cache-*/
+
 # Editors / OS
 .DS_Store
 Thumbs.db

@@ -1,8 +1,29 @@
 // Base typography and element styles.
 
+// local() first: if the user already has Cascadia Code / Inter installed
+// (developers, designers), the browser uses it from disk with zero network
+// cost -- no FOUT for those users. Everyone else falls through to url() and
+// downloads the self-hosted woff2.
+//
+// Per CSS spec, local() matches on either PostScript name OR Full font name,
+// NOT on the family name. Since PostScript/Full names differ across
+// distributions (Windows 11 ships "CascadiaCode-Roman"; the upstream OSS
+// build uses "CascadiaCodeRoman"; Google Fonts and manual installs may vary),
+// we list all common variants. First one that resolves wins.
+//
+// Note: Cascadia Code as shipped with Windows 11 is a variable font with only
+// a wght axis -- no italic. So local() for the italic face will fail on Win11
+// and correctly fall through to the woff2 url(). Nothing we can do about that
+// short of Microsoft shipping an italic file.
+
 @font-face {
     font-family: "Cascadia Code";
-    src: url("/assets/fonts/cascadia-code.woff2") format("woff2-variations"),
+    src: local("Cascadia Code Regular"),
+        local("CascadiaCode-Roman"),
+        local("CascadiaCodeRoman"),
+        local("CascadiaCode"),
+        local("Cascadia Code"),
+        url("/assets/fonts/cascadia-code.woff2") format("woff2-variations"),
         url("/assets/fonts/cascadia-code.woff2") format("woff2");
     font-weight: 200 700;
     font-style: normal;
@@ -11,7 +32,10 @@
 
 @font-face {
     font-family: "Cascadia Code";
-    src: url("/assets/fonts/cascadia-code-italic.woff2") format("woff2-variations"),
+    src: local("Cascadia Code Italic"),
+        local("CascadiaCode-Italic"),
+        local("CascadiaCodeItalic"),
+        url("/assets/fonts/cascadia-code-italic.woff2") format("woff2-variations"),
         url("/assets/fonts/cascadia-code-italic.woff2") format("woff2");
     font-weight: 200 700;
     font-style: italic;
@@ -20,7 +44,11 @@
 
 @font-face {
     font-family: "Inter";
-    src: url("/assets/fonts/InterVariable.woff2") format("woff2-variations"),
+    src: local("Inter Regular"),
+        local("Inter-Regular"),
+        local("InterVariable"),
+        local("Inter"),
+        url("/assets/fonts/InterVariable.woff2") format("woff2-variations"),
         url("/assets/fonts/InterVariable.woff2") format("woff2");
     font-weight: 100 900;
     font-style: normal;
@@ -29,11 +57,340 @@
 
 @font-face {
     font-family: "Inter";
-    src: url("/assets/fonts/InterVariable-Italic.woff2") format("woff2-variations"),
+    src: local("Inter Italic"),
+        local("Inter-Italic"),
+        local("InterVariable-Italic"),
+        url("/assets/fonts/InterVariable-Italic.woff2") format("woff2-variations"),
         url("/assets/fonts/InterVariable-Italic.woff2") format("woff2");
     font-weight: 100 900;
     font-style: italic;
     font-display: swap;
+}
+
+// Metric-adjusted fallback fonts. While Inter/Cascadia are still loading,
+// the browser walks through --font-sans / --font-mono and picks the first
+// family that resolves via local() -- each fallback has its OWN family
+// name so the browser evaluates them one by one instead of collapsing
+// multiple @font-face with same descriptors (CSS "last wins" rule would
+// otherwise silently drop earlier ones). Overrides are calibrated so the
+// fallback line box matches the web font's at the pixel: no layout shift
+// on swap, and word wrap positions stay identical.
+//
+// Regenerate with: python _tools/compute_fallback_overrides.py
+
+// --- Inter fallbacks ---
+
+@font-face {
+    font-family: "Inter Fallback Segoe UI";
+    src: local("Segoe UI"), local("SegoeUI");
+    font-style: normal;
+    size-adjust: 111.0363%;
+    ascent-override: 87.2463%;
+    descent-override: 21.7236%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Segoe UI";
+    src: local("Segoe UI Italic"), local("SegoeUI-Italic");
+    font-style: italic;
+    size-adjust: 111.7637%;
+    ascent-override: 86.6784%;
+    descent-override: 21.5822%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Ubuntu";
+    src: local("Ubuntu");
+    font-style: normal;
+    size-adjust: 221.5845%;
+    ascent-override: 43.7192%;
+    descent-override: 10.8857%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Ubuntu";
+    src: local("Ubuntu Italic");
+    font-style: italic;
+    size-adjust: 223.0360%;
+    ascent-override: 43.4347%;
+    descent-override: 10.8149%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Roboto";
+    src: local("Roboto");
+    font-style: normal;
+    size-adjust: 110.6706%;
+    ascent-override: 87.5345%;
+    descent-override: 21.7954%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Roboto";
+    src: local("Roboto Italic");
+    font-style: italic;
+    size-adjust: 111.3956%;
+    ascent-override: 86.9648%;
+    descent-override: 21.6535%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback DejaVu";
+    src: local("DejaVu Sans");
+    font-style: normal;
+    size-adjust: 94.1986%;
+    ascent-override: 102.8413%;
+    descent-override: 25.6067%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback DejaVu";
+    src: local("DejaVu Sans Oblique");
+    font-style: italic;
+    size-adjust: 94.8156%;
+    ascent-override: 102.1720%;
+    descent-override: 25.4400%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Noto";
+    src: local("Noto Sans");
+    font-style: normal;
+    size-adjust: 212.7024%;
+    ascent-override: 45.5449%;
+    descent-override: 11.3403%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Noto";
+    src: local("Noto Sans Italic");
+    font-style: italic;
+    size-adjust: 214.0958%;
+    ascent-override: 45.2484%;
+    descent-override: 11.2665%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Arial";
+    src: local("Arial"), local("Liberation Sans");
+    font-style: normal;
+    size-adjust: 110.4282%;
+    ascent-override: 87.7267%;
+    descent-override: 21.8432%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Inter Fallback Arial";
+    src: local("Arial Italic"), local("Liberation Sans Italic");
+    font-style: italic;
+    size-adjust: 111.1516%;
+    ascent-override: 87.1558%;
+    descent-override: 21.7011%;
+    line-gap-override: 0%;
+}
+
+// --- Cascadia Code fallbacks ---
+
+// Cascadia Mono ships with Windows Terminal on Win 10/11: same glyphs and
+// metrics as Cascadia Code minus ligatures, so it's a near-invisible swap
+// while our web font is downloading. size-adjust is exactly 100% because
+// the em-square, ascent, descent and xWidthAvg all match. Same local()
+// caveat as above: match on PostScript / Full name, not family name.
+@font-face {
+    font-family: "Cascadia Code Fallback Cascadia Mono";
+    src: local("Cascadia Mono Regular"),
+        local("CascadiaMono-Roman"),
+        local("CascadiaMonoRoman"),
+        local("CascadiaMono"),
+        local("Cascadia Mono");
+    font-style: normal;
+    size-adjust: 100.0000%;
+    ascent-override: 92.7734%;
+    descent-override: 23.4375%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Cascadia Mono";
+    src: local("Cascadia Mono Italic"),
+        local("CascadiaMono-Italic"),
+        local("CascadiaMonoItalic");
+    font-style: italic;
+    size-adjust: 100.0000%;
+    ascent-override: 92.7734%;
+    descent-override: 23.4375%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback SF Mono";
+    src: local("SF Mono"), local("SFMono-Regular");
+    font-style: normal;
+    size-adjust: 94.7867%;
+    ascent-override: 97.8760%;
+    descent-override: 24.7266%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback SF Mono";
+    src: local("SF Mono Italic"), local("SFMono-RegularItalic");
+    font-style: italic;
+    size-adjust: 94.7867%;
+    ascent-override: 97.8760%;
+    descent-override: 24.7266%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Menlo";
+    src: local("Menlo");
+    font-style: normal;
+    size-adjust: 97.3236%;
+    ascent-override: 95.3247%;
+    descent-override: 24.0820%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Menlo";
+    src: local("Menlo Italic");
+    font-style: italic;
+    size-adjust: 97.3236%;
+    ascent-override: 95.3247%;
+    descent-override: 24.0820%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Consolas";
+    src: local("Consolas");
+    font-style: normal;
+    size-adjust: 106.5719%;
+    ascent-override: 87.0524%;
+    descent-override: 21.9922%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Consolas";
+    src: local("Consolas Italic");
+    font-style: italic;
+    size-adjust: 106.5719%;
+    ascent-override: 87.0524%;
+    descent-override: 21.9922%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Ubuntu";
+    src: local("Ubuntu Mono");
+    font-style: normal;
+    size-adjust: 240.0000%;
+    ascent-override: 38.6556%;
+    descent-override: 9.7656%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Ubuntu";
+    src: local("Ubuntu Mono Italic");
+    font-style: italic;
+    size-adjust: 240.0000%;
+    ascent-override: 38.6556%;
+    descent-override: 9.7656%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Roboto";
+    src: local("Roboto Mono");
+    font-style: normal;
+    size-adjust: 97.6404%;
+    ascent-override: 95.0155%;
+    descent-override: 24.0039%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Roboto";
+    src: local("Roboto Mono Italic");
+    font-style: italic;
+    size-adjust: 97.6404%;
+    ascent-override: 95.0155%;
+    descent-override: 24.0039%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback DejaVu";
+    src: local("DejaVu Sans Mono");
+    font-style: normal;
+    size-adjust: 97.3236%;
+    ascent-override: 95.3247%;
+    descent-override: 24.0820%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback DejaVu";
+    src: local("DejaVu Sans Mono Oblique");
+    font-style: italic;
+    size-adjust: 97.3236%;
+    ascent-override: 95.3247%;
+    descent-override: 24.0820%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Liberation";
+    src: local("Liberation Mono");
+    font-style: normal;
+    size-adjust: 97.6404%;
+    ascent-override: 95.0155%;
+    descent-override: 24.0039%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Liberation";
+    src: local("Liberation Mono Italic");
+    font-style: italic;
+    size-adjust: 97.6404%;
+    ascent-override: 95.0155%;
+    descent-override: 24.0039%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Noto";
+    src: local("Noto Sans Mono");
+    font-style: normal;
+    size-adjust: 200.0000%;
+    ascent-override: 46.3867%;
+    descent-override: 11.7188%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: "Cascadia Code Fallback Noto";
+    src: local("Noto Sans Mono Italic");
+    font-style: italic;
+    size-adjust: 200.0000%;
+    ascent-override: 46.3867%;
+    descent-override: 11.7188%;
+    line-gap-override: 0%;
 }
 
 html {

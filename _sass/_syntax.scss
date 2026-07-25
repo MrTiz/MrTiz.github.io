@@ -524,220 +524,63 @@ pre::-webkit-scrollbar-thumb:hover {
 }
 
 // --- Language accent colours (header stripe + label) ---
-.language-rust {
-    --lang-color: hsl(20, 85%, 60%);
-}
+// Each row: (color, aliases...). Unfolded into a comma-separated selector
+// list at build time. `unquote("c\\+\\+")` produces `.language-c\+\+`, the
+// correct CSS escape for a class literally named "c++".
+$lang-colors: (
+    (hsl( 20, 85%, 60%), rust),
+    (hsl(210, 65%, 60%), c, cpp, cxx, unquote("c\\+\\+")),
+    (hsl( 50, 85%, 60%), javascript, js, jsx),
+    (hsl(210, 80%, 62%), typescript, ts, tsx),
+    (hsl( 45, 75%, 60%), python, py),
+    (hsl(  0, 65%, 60%), ruby, rb),
+    (hsl(190, 75%, 60%), go, golang),
+    (hsl( 20, 60%, 55%), java),
+    (hsl(285, 55%, 65%), kotlin, kt),
+    (hsl( 20, 85%, 62%), swift),
+    (hsl(245, 40%, 65%), php),
+    (hsl(130, 55%, 55%), csharp, cs),
+    (hsl( 15, 80%, 60%), html, htm),
+    (hsl(210, 75%, 60%), css),
+    (hsl(325, 60%, 65%), scss, sass),
+    (hsl( 35, 80%, 60%), json),
+    (hsl( 20, 65%, 60%), yaml, yml),
+    (hsl( 35, 70%, 55%), toml),
+    (hsl( 15, 65%, 60%), xml, svg),
+    (hsl(220, 15%, 65%), markdown, md),
+    (hsl(140, 50%, 60%), bash, sh, shell, zsh),
+    (hsl(210, 70%, 62%), powershell, ps1, pwsh),
+    (hsl(190, 60%, 60%), sql),
+    (hsl( 40, 75%, 58%), nasm, asm, x86asm, armasm, gas),
+    (hsl(210, 75%, 60%), dockerfile, docker),
+    (hsl(140, 45%, 55%), nginx, apache),
+    (hsl(275, 55%, 65%), diff),
+    (hsl(140, 50%, 55%), vim),
+    (hsl(245, 60%, 65%), lua),
+    (hsl(210, 60%, 60%), perl, pl),
+    (hsl(210, 55%, 55%), r),
+    (hsl(275, 55%, 60%), julia),
+    (hsl(275, 55%, 70%), elixir, ex),
+    (hsl(  0, 55%, 55%), erlang, erl),
+    (hsl(275, 45%, 60%), haskell, hs),
+    (hsl(  0, 55%, 55%), scala),
+    (hsl(140, 55%, 55%), clojure, clj),
+    (hsl(200, 70%, 60%), dart),
+    (hsl(320, 60%, 65%), graphql),
+    (hsl(220, 15%, 55%), solidity, sol),
+    (hsl(275, 55%, 60%), terraform, hcl, tf),
+    (hsl(140, 55%, 55%), makefile, make),
+    (hsl( 20, 75%, 60%), cmake),
+    (hsl(220, 10%, 60%), text, plaintext, txt, console, terminal, output),
+);
 
-.language-c,
-.language-cpp,
-.language-cxx,
-.language-c\\+\\+ {
-    --lang-color: hsl(210, 65%, 60%);
-}
-
-.language-javascript,
-.language-js,
-.language-jsx {
-    --lang-color: hsl(50, 85%, 60%);
-}
-
-.language-typescript,
-.language-ts,
-.language-tsx {
-    --lang-color: hsl(210, 80%, 62%);
-}
-
-.language-python,
-.language-py {
-    --lang-color: hsl(45, 75%, 60%);
-}
-
-.language-ruby,
-.language-rb {
-    --lang-color: hsl(0, 65%, 60%);
-}
-
-.language-go,
-.language-golang {
-    --lang-color: hsl(190, 75%, 60%);
-}
-
-.language-java {
-    --lang-color: hsl(20, 60%, 55%);
-}
-
-.language-kotlin,
-.language-kt {
-    --lang-color: hsl(285, 55%, 65%);
-}
-
-.language-swift {
-    --lang-color: hsl(20, 85%, 62%);
-}
-
-.language-php {
-    --lang-color: hsl(245, 40%, 65%);
-}
-
-.language-csharp,
-.language-cs {
-    --lang-color: hsl(130, 55%, 55%);
-}
-
-.language-html,
-.language-htm {
-    --lang-color: hsl(15, 80%, 60%);
-}
-
-.language-css {
-    --lang-color: hsl(210, 75%, 60%);
-}
-
-.language-scss,
-.language-sass {
-    --lang-color: hsl(325, 60%, 65%);
-}
-
-.language-json {
-    --lang-color: hsl(35, 80%, 60%);
-}
-
-.language-yaml,
-.language-yml {
-    --lang-color: hsl(20, 65%, 60%);
-}
-
-.language-toml {
-    --lang-color: hsl(35, 70%, 55%);
-}
-
-.language-xml,
-.language-svg {
-    --lang-color: hsl(15, 65%, 60%);
-}
-
-.language-markdown,
-.language-md {
-    --lang-color: hsl(220, 15%, 65%);
-}
-
-.language-bash,
-.language-sh,
-.language-shell,
-.language-zsh {
-    --lang-color: hsl(140, 50%, 60%);
-}
-
-.language-powershell,
-.language-ps1,
-.language-pwsh {
-    --lang-color: hsl(210, 70%, 62%);
-}
-
-.language-sql {
-    --lang-color: hsl(190, 60%, 60%);
-}
-
-.language-nasm,
-.language-asm,
-.language-x86asm,
-.language-armasm,
-.language-gas {
-    --lang-color: hsl(40, 75%, 58%);
-}
-
-.language-dockerfile,
-.language-docker {
-    --lang-color: hsl(210, 75%, 60%);
-}
-
-.language-nginx,
-.language-apache {
-    --lang-color: hsl(140, 45%, 55%);
-}
-
-.language-diff {
-    --lang-color: hsl(275, 55%, 65%);
-}
-
-.language-vim {
-    --lang-color: hsl(140, 50%, 55%);
-}
-
-.language-lua {
-    --lang-color: hsl(245, 60%, 65%);
-}
-
-.language-perl,
-.language-pl {
-    --lang-color: hsl(210, 60%, 60%);
-}
-
-.language-r {
-    --lang-color: hsl(210, 55%, 55%);
-}
-
-.language-julia {
-    --lang-color: hsl(275, 55%, 60%);
-}
-
-.language-elixir,
-.language-ex {
-    --lang-color: hsl(275, 55%, 70%);
-}
-
-.language-erlang,
-.language-erl {
-    --lang-color: hsl(0, 55%, 55%);
-}
-
-.language-haskell,
-.language-hs {
-    --lang-color: hsl(275, 45%, 60%);
-}
-
-.language-scala {
-    --lang-color: hsl(0, 55%, 55%);
-}
-
-.language-clojure,
-.language-clj {
-    --lang-color: hsl(140, 55%, 55%);
-}
-
-.language-dart {
-    --lang-color: hsl(200, 70%, 60%);
-}
-
-.language-graphql {
-    --lang-color: hsl(320, 60%, 65%);
-}
-
-.language-solidity,
-.language-sol {
-    --lang-color: hsl(220, 15%, 55%);
-}
-
-.language-terraform,
-.language-hcl,
-.language-tf {
-    --lang-color: hsl(275, 55%, 60%);
-}
-
-.language-makefile,
-.language-make {
-    --lang-color: hsl(140, 55%, 55%);
-}
-
-.language-cmake {
-    --lang-color: hsl(20, 75%, 60%);
-}
-
-.language-text,
-.language-plaintext,
-.language-txt,
-.language-console,
-.language-terminal,
-.language-output {
-    --lang-color: hsl(220, 10%, 60%);
+@each $entry in $lang-colors {
+    $color: nth($entry, 1);
+    $selectors: ();
+    @for $i from 2 through length($entry) {
+        $selectors: append($selectors, unquote(".language-#{nth($entry, $i)}"), comma);
+    }
+    #{$selectors} {
+        --lang-color: #{$color};
+    }
 }

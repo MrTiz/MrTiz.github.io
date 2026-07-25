@@ -10,11 +10,11 @@ New-Item -ItemType Directory -Force -Path $fonts, $temp | Out-Null
 
 $hdr = @{ 'User-Agent' = 'PowerShell' }
 
-function Fetch-Release($repo) {
+function Get-Release($repo) {
     Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -Headers $hdr
 }
 
-function Pick-Asset($release, $regex) {
+function Select-Asset($release, $regex) {
     $a = $release.assets | Where-Object { $_.name -match $regex } | Select-Object -First 1
     if (-not $a) { throw "No asset matching $regex in $($release.html_url)" }
     return $a
@@ -44,8 +44,8 @@ $archives = @{}
 
 if ($needed -contains 'resvg') {
     Write-Host "Querying resvg release..."
-    $rel = Fetch-Release 'linebender/resvg'
-    $asset = Pick-Asset $rel 'x86_64.*windows.*\.zip$|win.*x86_64.*\.zip$|windows.*x86_64.*\.zip$|win64.*\.zip$'
+    $rel = Get-Release 'linebender/resvg'
+    $asset = Select-Asset $rel 'x86_64.*windows.*\.zip$|win.*x86_64.*\.zip$|windows.*x86_64.*\.zip$|win64.*\.zip$'
     Write-Host "  -> $($asset.name)"
     $zip = Join-Path $temp $asset.name
     Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -Headers $hdr
@@ -56,8 +56,8 @@ if ($needed -contains 'resvg') {
 
 if ($needed -contains 'cascadia') {
     Write-Host "Querying Cascadia Code release..."
-    $rel = Fetch-Release 'microsoft/cascadia-code'
-    $asset = Pick-Asset $rel '^CascadiaCode-.*\.zip$'
+    $rel = Get-Release 'microsoft/cascadia-code'
+    $asset = Select-Asset $rel '^CascadiaCode-.*\.zip$'
     Write-Host "  -> $($asset.name)"
     $zip = Join-Path $temp $asset.name
     Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -Headers $hdr
@@ -68,8 +68,8 @@ if ($needed -contains 'cascadia') {
 
 if ($needed -contains 'inter') {
     Write-Host "Querying Inter release..."
-    $rel = Fetch-Release 'rsms/inter'
-    $asset = Pick-Asset $rel '^Inter-\d.*\.zip$'
+    $rel = Get-Release 'rsms/inter'
+    $asset = Select-Asset $rel '^Inter-\d.*\.zip$'
     Write-Host "  -> $($asset.name)"
     $zip = Join-Path $temp $asset.name
     Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -Headers $hdr

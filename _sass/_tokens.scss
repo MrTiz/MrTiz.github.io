@@ -5,13 +5,26 @@
 :root {
     // Typography
     --font-sans:
-        "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-        "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+        "Inter",
+        "Inter Fallback Segoe UI",
+        "Inter Fallback Ubuntu", "Inter Fallback Roboto", "Inter Fallback DejaVu",
+        "Inter Fallback Noto", "Inter Fallback Arial",
+        ui-sans-serif, system-ui, -apple-system, Roboto,
+        "Helvetica Neue", "Noto Sans", sans-serif,
         "Apple Color Emoji", "Segoe UI Emoji";
 
-    // Self-hosted, proper single-cell width for box-drawing chars
+    // Self-hosted, proper single-cell width for box-drawing chars.
+    // Cascadia Mono fallback is first because on Win 10/11 it's the visually
+    // closest match to Cascadia Code (same em, same glyph widths, no ligatures)
+    // -- if the user has it, the FOUT is nearly invisible.
     --font-mono:
-        "Cascadia Code", "Cascadia Mono", ui-monospace, "SF Mono", "SFMono-Regular",
+        "Cascadia Code",
+        "Cascadia Code Fallback Cascadia Mono",
+        "Cascadia Code Fallback SF Mono", "Cascadia Code Fallback Menlo",
+        "Cascadia Code Fallback Consolas", "Cascadia Code Fallback Ubuntu",
+        "Cascadia Code Fallback Roboto", "Cascadia Code Fallback DejaVu",
+        "Cascadia Code Fallback Liberation", "Cascadia Code Fallback Noto",
+        ui-monospace, "SF Mono", "SFMono-Regular",
         "Menlo", "Consolas", "Liberation Mono", monospace;
 
     // Fluid type scale
@@ -43,14 +56,11 @@
     --radius-1: 4px;
     --radius-2: 8px;
     --radius-3: 12px;
-    --radius-4: 16px;
     --radius-pill: 999px;
 
     // Layout
-    --container: 100%;
     --container-pad: clamp(1rem, 3vw, 3rem);
     --content: 60rem; // reading measure (no sidebar)
-    --article: none;
     --sidebar: 18rem;
     --grid-gap: 3.5rem;
 
@@ -58,12 +68,9 @@
     --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     --dur-1: 120ms;
     --dur-2: 220ms;
-    --dur-3: 320ms;
 
     // Shadows
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.15);
     --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.2);
-    --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.28);
 
     // Focus ring
     --ring-width: 2px;
@@ -79,7 +86,6 @@
     --bg-1: hsl(220, 15%, 10%); // section
     --bg-2: hsl(220, 14%, 13%); // card
     --bg-3: hsl(220, 13%, 17%); // code / pill
-    --bg-4: hsl(220, 12%, 22%); // input / hover
 
     --border-1: hsl(220, 12%, 20%);
     --border-2: hsl(220, 12%, 28%);
@@ -102,13 +108,10 @@
     --tag-fg-hover: var(--accent-hover);
 
     --success: hsl(150, 60%, 55%);
-    --warning: hsl(35, 90%, 65%);
     --danger: hsl(0, 75%, 65%);
 
     --selection-bg: hsla(190, 90%, 60%, 0.28);
     --selection-fg: hsl(210, 20%, 98%);
-
-    --shadow-glow: 0 0 0 1px hsl(220, 12%, 28%);
 }
 
 // Light (opt-in via toggle, no prefers-color-scheme fallback)
@@ -119,7 +122,6 @@
     --bg-1: hsl(220, 20%, 98.5%);
     --bg-2: hsl(220, 20%, 96%);
     --bg-3: hsl(220, 18%, 93%);
-    --bg-4: hsl(220, 15%, 88%);
 
     --border-1: hsl(220, 15%, 88%);
     --border-2: hsl(220, 15%, 78%);
@@ -142,11 +144,8 @@
     --tag-fg-hover: var(--accent-hover);
 
     --success: hsl(150, 65%, 32%);
-    --warning: hsl(30, 90%, 42%);
     --danger: hsl(0, 75%, 45%);
 
     --selection-bg: hsla(195, 90%, 36%, 0.20);
     --selection-fg: hsl(220, 25%, 10%);
-
-    --shadow-glow: 0 0 0 1px hsl(220, 15%, 82%);
 }

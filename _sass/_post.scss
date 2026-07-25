@@ -215,6 +215,15 @@
     line-height: 1.55;
 }
 
+// Narrow screens: let wide tables scroll horizontally instead of overflowing
+@media (max-width: 640px) {
+    .post__content table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
 // --- Post footer ---
 .post__footer {
     margin-top: var(--space-8);
