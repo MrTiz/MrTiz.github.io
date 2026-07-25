@@ -32,13 +32,20 @@ html {
     }
 }
 
+html {
+    // Belt-and-suspenders: prevent any accidental horizontal scroll from
+    // showing up as a bottom scrollbar. Body's overflow-x isn't enough when
+    // html ends up as the scroll container (e.g. with sticky headers).
+    overflow-x: clip;
+}
+
 body {
     min-height: 100dvh;
     line-height: var(--lh-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 img,

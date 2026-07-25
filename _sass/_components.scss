@@ -142,6 +142,11 @@
     line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    // Prevent long compound words / URLs from pushing the -webkit-box
+    // wider than its container and getting clipped by post-card overflow.
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
     margin: 0;
 }
 
@@ -157,28 +162,41 @@
     -webkit-mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent 100%);
 }
 
-// Card grid. Negative margin extends cards into the container padding
-// so card *content* aligns flush with the rest of the page.
+// Card grid. `minmax(0, 1fr)` (not `1fr`) prevents the column from
+// growing to fit the min-content of its children — otherwise a long
+// unbroken word inside a card would push the whole grid past the
+// container width. Default: no outward pull. We only apply the negative
+// margin (to make card content align flush with the page's text column)
+// once --container-pad is at least as wide as --space-5, which happens
+// around a 800px viewport with the clamp(1rem, 3vw, 3rem) token.
 .post-list {
     display: grid;
     gap: var(--space-5);
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     list-style: none;
     padding: 0;
-    margin: 0 calc(var(--space-5) * -1);
+    margin: 0;
 }
 
 .post-list>li {
     display: flex;
+    min-width: 0;
 }
 
 .post-list>li>.post-card {
     flex: 1;
+    min-width: 0;
 }
 
 @media (min-width: 780px) {
     .post-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 800px) {
+    .post-list {
+        margin: 0 calc(var(--space-5) * -1);
     }
 }
 

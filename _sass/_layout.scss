@@ -2,6 +2,9 @@
 
 .container {
     width: 100%;
+    max-width: 120rem; // 1920px — avoids overstretched layout on
+                        // 4K / ultrawide monitors while still fitting
+                        // the 2-card home grid comfortably.
     margin-inline: auto;
     padding-inline: var(--container-pad);
 }
