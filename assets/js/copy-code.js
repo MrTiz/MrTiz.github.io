@@ -120,12 +120,22 @@
         return '';
     }
 
+    var WRAP_THRESHOLD = 110;
+
     function decorateBlock(rougeWrap) {
         if (rougeWrap.dataset.decorated === '1') return;
         if (rougeWrap.closest('.code-block')) return;
 
         var savedText = restructureBlock(rougeWrap);
         if (savedText !== null) rougeWrap._rougeText = savedText;
+
+        var wrapOn = false;
+        if (savedText !== null) {
+            var textLines = savedText.split('\n');
+            for (var li = 0; li < textLines.length; li++) {
+                if (textLines[li].length > WRAP_THRESHOLD) { wrapOn = true; break; }
+            }
+        }
 
         var lang = detectLang(rougeWrap, rougeWrap.querySelector('code'));
 
@@ -135,16 +145,17 @@
             '<span class="code-block__lang">' + lang + '</span>' +
             '<div class="code-block__actions">' +
             '<button type="button" class="code-block__btn code-block__wrap"' +
-            ' aria-label="Toggle line wrapping" aria-pressed="true" title="Toggle line wrapping">' +
+            ' aria-label="Toggle line wrapping" aria-pressed="' + (wrapOn ? 'true' : 'false') + '" title="Toggle line wrapping">' +
             WRAP_ICON + '<span>Wrap</span>' +
             '</button>' +
-            '<button type="button" class="code-block__btn code-block__copy" aria-label="Copy code">' +
+            '<button type="button" class="code-block__btn code-block__copy" aria-label="Copy code" title="Copy code">' +
             COPY_ICON + '<span>Copy</span>' +
             '</button>' +
             '</div>';
 
         rougeWrap.insertBefore(head, rougeWrap.firstChild);
         rougeWrap.classList.add('code-block');
+        if (!wrapOn) rougeWrap.classList.add('is-nowrap');
         rougeWrap.dataset.decorated = '1';
 
         var copyBtn = head.querySelector('.code-block__copy');
@@ -152,12 +163,15 @@
             var text = extractText(rougeWrap);
             copyText(text).then(function () {
                 copyBtn.setAttribute('data-state', 'copied');
+                copyBtn.setAttribute('title', 'Copied!');
                 copyBtn.innerHTML = CHECK_ICON + '<span>Copied</span>';
                 setTimeout(function () {
                     copyBtn.removeAttribute('data-state');
+                    copyBtn.setAttribute('title', 'Copy code');
                     copyBtn.innerHTML = COPY_ICON + '<span>Copy</span>';
                 }, 1600);
             }).catch(function () {
+                copyBtn.setAttribute('title', 'Copy failed');
                 copyBtn.innerHTML = '<span>Failed</span>';
             });
         });

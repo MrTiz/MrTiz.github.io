@@ -24,6 +24,17 @@
         background-color var(--dur-2) var(--ease);
 }
 
+.site-header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--border-1);
+    transform-origin: left center;
+    transform: scaleX(var(--scroll-progress, 0));
+    pointer-events: none;
+    z-index: -1;
+}
+
 .site-header[data-scrolled="true"] {
     border-bottom-color: var(--border-1);
 }
@@ -395,4 +406,68 @@
 
 body[data-toc-open="true"] {
     overflow: hidden;
+}
+
+// --- Scroll-to-top (post pages only, revealed past DEEP_THRESHOLD in scroll-header.js) ---
+.scroll-top {
+    position: fixed;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    z-index: 18;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    color: var(--fg-2);
+    background: color-mix(in oklch, var(--bg-1) 88%, transparent);
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    border: 2px solid var(--border-1);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-2);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition:
+        opacity var(--dur-2) var(--ease),
+        transform var(--dur-2) var(--ease),
+        color var(--dur-1) var(--ease),
+        border-color var(--dur-1) var(--ease);
+}
+
+.scroll-top svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.is-scrolled-deep .scroll-top {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.is-scrolled-deep.is-idle .scroll-top {
+    opacity: 0.25;
+}
+
+.is-scrolled-deep.is-idle .scroll-top:hover,
+.is-scrolled-deep.is-idle .scroll-top:focus-visible,
+.is-scrolled-deep.is-idle .scroll-top:active {
+    opacity: 1;
+}
+
+.scroll-top:hover,
+.scroll-top:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scroll-top {
+        transform: none;
+        transition: opacity var(--dur-2) var(--ease);
+    }
 }

@@ -2,7 +2,7 @@
 
 <header class="site-header" id="site-header">
     <div class="container site-header__inner">
-        <a class="brand" href="{{ '/' | relative_url }}" aria-label="{{ site.title | escape }} home">
+        <a class="brand" href="{{ '/' | relative_url }}" aria-label="{{ site.title | escape }} home" title="{{ site.title | escape }} home">
             <span class="brand__mark" aria-hidden="true">//</span>
             <span class="brand__text">MrTiz</span>
         </a>
@@ -13,6 +13,7 @@
                 <li>
                     <a class="site-nav__link"
                        href="{{ '/' | relative_url }}"
+                       title="Home"
                        {% if current == '/' %}aria-current="page"{% endif %}>
                         <svg class="site-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -24,6 +25,7 @@
                 <li>
                     <a class="site-nav__link"
                        href="{{ '/tags/' | relative_url }}"
+                       title="Tags"
                        {% if current contains '/tags' %}aria-current="page"{% endif %}>
                         <svg class="site-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
@@ -35,6 +37,7 @@
                 <li>
                     <a class="site-nav__link"
                        href="{{ '/about/' | relative_url }}"
+                       title="About"
                        {% if current contains '/about' %}aria-current="page"{% endif %}>
                         <svg class="site-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -76,6 +79,7 @@
                     type="button"
                     id="toc-toggle-btn"
                     aria-label="Table of contents"
+                    title="Table of contents"
                     aria-expanded="false"
                     aria-controls="toc-panel"
                     hidden>
