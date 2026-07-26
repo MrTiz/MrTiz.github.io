@@ -107,7 +107,7 @@ Before diving in, let me give some context on how we got here. The cat-and-mouse
 For years, EDRs relied on user-mode API hooking. The EDR injects a DLL into every process, places trampolines at the beginning of sensitive `ntdll.dll` functions (`NtAllocateVirtualMemory`, `NtProtectVirtualMemory`, `NtWriteVirtualMemory`, etc.), and intercepts every call to inspect arguments before letting it through.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/user-mode-hooking.png" alt="User-mode hooking" width="1810" height="1087">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/user-mode-hooking.png" alt="User-mode hooking" width="1665" height="1000">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -117,7 +117,7 @@ The offensive response was **direct syscalls**: skip `ntdll.dll` entirely. Load 
 [SysWhispers](https://github.com/jthuraisamy/SysWhispers) by @jthuraisamy made this accessible by generating header/ASM stubs. [SysWhispers2](https://github.com/jthuraisamy/SysWhispers2) improved `SSN` resolution. Around the same time, [Hell's Gate](https://github.com/am0nsec/HellsGate) by am0nsec and smelly\_\_vx introduced dynamic `SSN` resolution by parsing `ntdll.dll` in memory. [Halo's Gate](https://blog.sektor7.net/#!res/2021/halosgate.md) and [Tartarus' Gate](https://github.com/trickster0/TartarusGate) by trickster0 handled cases where some stubs were hooked.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/direct_syscalls_principle.png" alt="Direct syscalls principle diagram" width="1840" height="1078">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/direct_syscalls_principle.png" alt="Direct syscalls principle diagram" width="1707" height="1000">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>
@@ -143,7 +143,7 @@ The answer was **indirect syscalls**: instead of executing `syscall` from your c
 The immediate return address now points into `ntdll.dll`. Clean. But the rest of the stack still reveals the real caller. EDRs started walking deeper.
 
 <p align="center">
-    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/indirect_syscalls_principle.png" alt="Indirect syscalls principle diagram" width="1840" height="1078">
+    <img loading="lazy" decoding="async" src="/assets/img/cet-callstack-spoofing-thread-pool-trampoline/indirect_syscalls_principle.png" alt="Indirect syscalls principle diagram" width="1707" height="1000">
     <br>
     <em>Image credit: <a href="https://redops.at/en/blog/direct-syscalls-vs-indirect-syscalls" target="_blank">RedOps</a></em>
 </p>

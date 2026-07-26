@@ -176,7 +176,7 @@ e5d427a8d9132f8ff121a20fb6e5168c3e74826ca3dd3a62fc1306693260f74a  /home/MrTiz/De
 
 On VirusTotal, we found only 3/70 detections, and Windows Defender didn't detect anything: [https://www.virustotal.com/gui/file/e5d427a8d9132f8ff121a20fb6e5168c3e74826ca3dd3a62fc1306693260f74a](https://www.virustotal.com/gui/file/e5d427a8d9132f8ff121a20fb6e5168c3e74826ca3dd3a62fc1306693260f74a)
 
-![VirusTotal report for the trojanized setup_wm.exe: only 3 of 70 vendors flag it as malicious (Bkav Pro, Fortinet, Rising)](/assets/img/defender-evasion-shellter-hoaxshell/virustotal.png){:loading="lazy" decoding="async" width="1920" height="1080"}
+![VirusTotal report for the trojanized setup_wm.exe: only 3 of 70 vendors flag it as malicious (Bkav Pro, Fortinet, Rising)](/assets/img/defender-evasion-shellter-hoaxshell/virustotal.png){:loading="lazy" decoding="async" width="1778" height="1000"}
 
 ### Trojan execution
 Once the trojan is uploaded to the victim's machine, simply run it:
