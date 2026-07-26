@@ -44,6 +44,16 @@
 <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" sizes="any" />
 <link rel="apple-touch-icon" href="{{ '/favicon.ico' | relative_url }}" />
 
+{%- if page.url == "/tags/" -%}
+<link
+    rel="preload"
+    as="font"
+    type="font/woff2"
+    href="{{ '/assets/fonts/cascadia-code.woff2' | relative_url }}"
+    crossorigin
+/>
+{%- endif -%}
+
 {%- include inline-css.html -%}
 
 <link
