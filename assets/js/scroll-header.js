@@ -1,7 +1,3 @@
-// Toggles data-scrolled on the header for the CSS border underline,
-// writes --scroll-progress (0..1) used as the reading-progress fill,
-// toggles is-scrolled-deep on <html> to reveal the scroll-to-top button,
-// and toggles is-idle after IDLE_TIMEOUT ms of no scrolling to dim it.
 (function () {
     var header = document.getElementById('site-header');
     if (!header) return;
@@ -23,16 +19,19 @@
     function update() {
         raf = null;
         var y = window.scrollY;
-        header.setAttribute('data-scrolled', y > 4 ? 'true' : 'false');
-        root.classList.toggle('is-scrolled-deep', y > DEEP_THRESHOLD);
-        // Skip the --scroll-progress write during a drag; the pump() below
-        // owns it and any real-scroll write would fight the optimistic one
-        // and cause the bar to flicker between the finger and the page.
+        var scrolled = y > 4;
+        var deep = y > DEEP_THRESHOLD;
+        // During a drag pump() owns --scroll-progress; a real-scroll write
+        // here would fight its optimistic one and flicker the bar.
+        var p = null;
         if (!scrubbing) {
             var max = root.scrollHeight - window.innerHeight;
-            var p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
-            header.style.setProperty('--scroll-progress', p);
+            p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
         }
+
+        header.setAttribute('data-scrolled', scrolled ? 'true' : 'false');
+        root.classList.toggle('is-scrolled-deep', deep);
+        if (p !== null) header.style.setProperty('--scroll-progress', p);
         markActive();
     }
     function schedule() { if (raf == null) raf = requestAnimationFrame(update); }
@@ -45,24 +44,14 @@
     if (topBtn) {
         topBtn.addEventListener('click', function () {
             window.scrollTo({ top: 0, left: 0 });
-            // Release focus so the button dims normally when it reappears
-            // (mobile taps keep :focus on the DOM node even after it's hidden)
+            // Mobile taps keep :focus on the node even after it's hidden.
             topBtn.blur();
         });
     }
 
-    // Header as reading-progress scrubber: tap/drag anywhere on its empty
-    // area to seek. pointerdown on brand/nav/buttons is ignored so those
-    // still fire normally. setPointerCapture makes the header receive every
-    // pointermove until pointerup — the drag continues even if the finger
-    // leaves the header vertically.
-    //
-    // Throttling: pointermove can fire 100+ times/sec on a fast mouse. We
-    // coalesce all of them into one scrollTo per rAF (~60fps). We also write
-    // --scroll-progress optimistically from the pointer X so the visual bar
-    // tracks the cursor exactly, without waiting for scroll+repaint on long
-    // pages. Rect and scroll max are cached at pointerdown so pump() never
-    // triggers a forced layout during the drag.
+    // Rect + scroll max are cached at pointerdown so pump() never forces
+    // layout during the drag; ratio is written optimistically so the bar
+    // tracks the finger without waiting for scroll+repaint on long pages.
     var scrubbing = false;
     var scrubX = 0;
     var scrubRAF = null;
@@ -77,11 +66,9 @@
         if (ratio < 0) ratio = 0;
         else if (ratio > 1) ratio = 1;
         header.style.setProperty('--scroll-progress', ratio);
-        // Force instant to override the site-wide `scroll-behavior: smooth`.
-        // With smooth, the page interpolates toward target over ~300ms; if
-        // the user releases mid-interpolation, subsequent scroll events fire
-        // with `scrubbing = false` and overwrite the bar with the still-
-        // catching-up scroll position, causing a visible dip-and-refill.
+        // `instant` overrides the site-wide smooth scroll: without it, a
+        // release mid-interpolation lets update() overwrite the bar with
+        // the still-catching-up position and the bar dips then refills.
         window.scrollTo({ top: ratio * scrubMax, left: 0, behavior: 'instant' });
     }
     function schedulePump() {
@@ -89,7 +76,6 @@
     }
 
     header.addEventListener('pointerdown', function (e) {
-        // Let brand/nav/buttons handle their own clicks
         if (e.target.closest(INTERACTIVE)) return;
         scrubbing = true;
         scrubRect = header.getBoundingClientRect();
