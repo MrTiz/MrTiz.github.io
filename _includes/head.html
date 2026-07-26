@@ -44,20 +44,40 @@
 <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" sizes="any" />
 <link rel="apple-touch-icon" href="{{ '/favicon.ico' | relative_url }}" />
 
-<!-- Preloading a font auto-promotes it to Highest regardless of
-     fetchpriority — only the italic files we DON'T preload stay off the
-     critical path. `crossorigin` is required same-origin or the browser
-     double-fetches. -->
-<link rel="preload" href="{{ '/assets/fonts/InterVariable.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin fetchpriority="high" />
-<link rel="preload" href="{{ '/assets/fonts/cascadia-code.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin fetchpriority="high" />
+<link
+    rel="preload"
+    href="{{ '/assets/fonts/InterVariable.woff2' | relative_url }}"
+    as="font"
+    type="font/woff2"
+    crossorigin
+    fetchpriority="high"
+/>
+<link
+    rel="preload"
+    href="{{ '/assets/fonts/cascadia-code.woff2' | relative_url }}"
+    as="font"
+    type="font/woff2"
+    crossorigin
+    fetchpriority="high"
+/>
 
-{%- include critical-css.html -%}
+<style>
+    html {
+        font-family: sans-serif;
+    }
+    code,
+    pre,
+    kbd,
+    samp,
+    tt {
+        font-family: monospace;
+    }
+</style>
 
-<!-- Async loader: browser fetches without blocking render, then swaps
-     rel="preload" → "stylesheet" once loaded. <noscript> keeps the page
-     styled if JS is off. -->
-<link rel="preload" as="style" href="{{ '/assets/css/style.css' | relative_url }}" onload="this.onload=null;this.rel='stylesheet'" />
-<noscript><link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}" /></noscript>
+<link
+    rel="stylesheet"
+    href="{{ '/assets/css/style.css' | relative_url }}"
+/>
 
 <link
     rel="alternate"

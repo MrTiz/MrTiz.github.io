@@ -157,10 +157,9 @@ figure.highlighter-rouge table.rouge-table,
     width: 2.75rem;
     padding: var(--space-2) 1.1rem var(--space-2) var(--space-3);
     text-align: right;
-    color: var(--fg-3);
+    color: var(--fg-2);
     background: transparent;
     border-right: 1px solid var(--border-1);
-    opacity: 0.55;
     user-select: none;
     -webkit-user-select: none;
     font-variant-numeric: tabular-nums;
@@ -205,9 +204,8 @@ figure.highlighter-rouge table.rouge-table,
     align-content: start;
     padding: 0 1.1rem 0 var(--space-3);
     text-align: right;
-    color: var(--fg-3);
-    opacity: 0.55;
-    border-right: 1px solid var(--border-1);
+    color: var(--fg-2);
+    border-right: 2px solid var(--border-1);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     user-select: none;
@@ -504,7 +502,7 @@ pre::-webkit-scrollbar-thumb:hover {
     }
 
     .lineno {
-        color: var(--fg-3);
+        color: var(--fg-2);
         padding-right: 0.75rem;
         user-select: none;
         -webkit-user-select: none;
