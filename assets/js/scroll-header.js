@@ -47,11 +47,19 @@
         schedule();
     }, { passive: true });
 
-    window.addEventListener('load', refreshDocMax);
-
-    if (typeof ResizeObserver === 'function') {
-        new ResizeObserver(refreshDocMax).observe(document.body);
-    }
+    window.addEventListener('load', function () {
+        refreshDocMax();
+        if (typeof ResizeObserver !== 'function') return;
+        var pending = false;
+        new ResizeObserver(function () {
+            if (pending) return;
+            pending = true;
+            requestAnimationFrame(function () {
+                pending = false;
+                refreshDocMax();
+            });
+        }).observe(document.body);
+    });
 
     var topBtn = document.getElementById('scroll-top');
     if (topBtn) {
