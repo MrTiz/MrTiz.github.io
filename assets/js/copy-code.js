@@ -1,5 +1,3 @@
-// Rewrites Rouge's <table> code blocks into a CSS grid and adds a
-// header bar with language label, copy button, and wrap toggle.
 (function () {
     var COPY_ICON =
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -49,8 +47,6 @@
         return 'code';
     }
 
-    // Replaces Rouge's gutter/code <table> with a flat CSS grid.
-    // Returns the plain-text source for the copy button.
     function restructureBlock(wrap) {
         var codePre = wrap.querySelector('td.rouge-code pre');
         if (!codePre) return null;
@@ -58,9 +54,8 @@
 
         var codeHTML = codePre.innerHTML.replace(/\n+$/, '');
         var lines = codeHTML.split('\n');
-
-        // Drop trailing empty fragments left by Rouge's whitespace token
         var probe = document.createElement('div');
+
         while (lines.length > 1) {
             probe.innerHTML = lines[lines.length - 1];
             if ((probe.textContent || '').trim() === '') {
@@ -89,7 +84,6 @@
 
             var lineEl = document.createElement('span');
             lineEl.className = 'rouge-line';
-            // Zero-width space keeps empty lines at visible height
             lineEl.innerHTML = lines[i].length ? lines[i] : '\u200b';
 
             grid.appendChild(numEl);

@@ -1,5 +1,3 @@
-// Table of Contents: populates both the desktop sidebar (#toc-list) and the
-// mobile dropdown panel (#toc-panel-list), with scrollspy highlighting.
 (function () {
     var content = document.getElementById('post-content');
     var tocList = document.getElementById('toc-list');
@@ -35,7 +33,6 @@
         return;
     }
 
-    // Assign IDs and append # anchor links
     var usedIds = Object.create(null);
     headings.forEach(function (h) {
         if (!h.id) {
@@ -116,22 +113,24 @@
         toggleBtn.hidden = false;
         toggleBtn.addEventListener('click', togglePanel);
     }
+
     if (backdrop) {
         backdrop.addEventListener('click', closePanel);
     }
+
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && document.body.getAttribute('data-toc-open') === 'true') {
             closePanel();
         }
     });
 
-    // Close panel on link tap
     if (panelList) {
         panelList.addEventListener('click', function (e) {
             var link = e.target.closest('a');
             if (link) closePanel();
         });
     }
+
     if (tocList) {
         tocList.addEventListener('click', function (e) {
             var link = e.target.closest('.toc__link');
@@ -140,20 +139,20 @@
         });
     }
 
-    // --- Scrollspy ---
     var linkById = Object.create(null);
     sidebarLinks.forEach(function (l) {
         linkById[l.dataset.target] = linkById[l.dataset.target] || [];
         linkById[l.dataset.target].push(l);
     });
+
     panelLinks.forEach(function (l) {
         linkById[l.dataset.target] = linkById[l.dataset.target] || [];
         linkById[l.dataset.target].push(l);
     });
 
     var allLinks = sidebarLinks.concat(panelLinks);
-
     var visible = new Map();
+
     var observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
             if (e.isIntersecting) visible.set(e.target.id, e.intersectionRatio);
@@ -161,6 +160,7 @@
         });
 
         var activeId = null;
+
         if (visible.size > 0) {
             var top = Infinity;
             visible.forEach(function (_, id) {
@@ -169,6 +169,7 @@
                 var t = el.getBoundingClientRect().top;
                 if (t >= 0 && t < top) { top = t; activeId = id; }
             });
+
             if (!activeId) {
                 var lastVisible = null, lastTop = -Infinity;
                 visible.forEach(function (_, id) {
@@ -194,12 +195,13 @@
             l.classList.remove('toc__link--active');
             l.classList.remove('is-active');
         });
+
         if (activeId && linkById[activeId]) {
             linkById[activeId].forEach(function (l) {
                 if (l.classList.contains('toc__link')) l.classList.add('toc__link--active');
                 else l.classList.add('is-active');
             });
-            // Keep active link in view inside the sidebar
+
             if (DESKTOP_QUERY.matches && tocEl && tocEl.scrollHeight > tocEl.clientHeight) {
                 var link = linkById[activeId].find(function (l) { return l.classList.contains('toc__link'); });
                 if (link) {

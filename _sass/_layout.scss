@@ -258,6 +258,9 @@
 
 .theme-toggle .icon-moon {
     display: block;
+    // Crescent's visual mass sits bottom-left; nudge up by 1px to
+    // optically match the Home/Tags/About icons and the sun (symmetric).
+    transform: translateY(-1px);
 }
 
 :root[data-theme="light"] .theme-toggle .icon-sun {

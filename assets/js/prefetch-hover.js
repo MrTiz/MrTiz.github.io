@@ -1,5 +1,3 @@
-// Prefetches same-origin links on hover/focus so navigation feels instant.
-// Skips external hosts, data-saver, 2G, and already-prefetched URLs.
 (function () {
     var HOVER_DELAY_MS = 65;
     var siteHost = location.hostname;
@@ -7,10 +5,12 @@
     var pendingTimer = null;
 
     var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
     if (conn) {
         if (conn.saveData) return;
         if (/2g/.test(conn.effectiveType || '')) return;
     }
+
     try {
         if (matchMedia('(prefers-reduced-data: reduce)').matches) return;
     } catch (_) { }

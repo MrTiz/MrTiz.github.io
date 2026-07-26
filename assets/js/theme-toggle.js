@@ -1,5 +1,3 @@
-// Light/dark toggle. Persists to localStorage. Dark is the default;
-// the <head> boot script applies the saved theme before first paint.
 (function () {
     var root = document.documentElement;
     var button = document.getElementById('theme-toggle');

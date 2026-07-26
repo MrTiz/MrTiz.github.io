@@ -7,6 +7,10 @@
     var root = document.documentElement;
     var raf = null;
     var idleTimer = null;
+    var docMax = 0;
+    function refreshDocMax() {
+        docMax = root.scrollHeight - window.innerHeight;
+    }
 
     function markActive() {
         root.classList.remove('is-idle');
@@ -21,12 +25,10 @@
         var y = window.scrollY;
         var scrolled = y > 4;
         var deep = y > DEEP_THRESHOLD;
-        // During a drag pump() owns --scroll-progress; a real-scroll write
-        // here would fight its optimistic one and flicker the bar.
         var p = null;
+
         if (!scrubbing) {
-            var max = root.scrollHeight - window.innerHeight;
-            p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+            p = docMax > 0 ? Math.min(1, Math.max(0, y / docMax)) : 0;
         }
 
         header.setAttribute('data-scrolled', scrolled ? 'true' : 'false');
@@ -36,22 +38,29 @@
     }
     function schedule() { if (raf == null) raf = requestAnimationFrame(update); }
 
+    refreshDocMax();
     update();
+
     window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('resize', function () {
+        refreshDocMax();
+        schedule();
+    }, { passive: true });
+
+    window.addEventListener('load', refreshDocMax);
+
+    if (typeof ResizeObserver === 'function') {
+        new ResizeObserver(refreshDocMax).observe(document.body);
+    }
 
     var topBtn = document.getElementById('scroll-top');
     if (topBtn) {
         topBtn.addEventListener('click', function () {
             window.scrollTo({ top: 0, left: 0 });
-            // Mobile taps keep :focus on the node even after it's hidden.
             topBtn.blur();
         });
     }
 
-    // Rect + scroll max are cached at pointerdown so pump() never forces
-    // layout during the drag; ratio is written optimistically so the bar
-    // tracks the finger without waiting for scroll+repaint on long pages.
     var scrubbing = false;
     var scrubX = 0;
     var scrubRAF = null;
@@ -66,11 +75,9 @@
         if (ratio < 0) ratio = 0;
         else if (ratio > 1) ratio = 1;
         header.style.setProperty('--scroll-progress', ratio);
-        // `instant` overrides the site-wide smooth scroll: without it, a
-        // release mid-interpolation lets update() overwrite the bar with
-        // the still-catching-up position and the bar dips then refills.
         window.scrollTo({ top: ratio * scrubMax, left: 0, behavior: 'instant' });
     }
+
     function schedulePump() {
         if (scrubRAF == null) scrubRAF = requestAnimationFrame(pump);
     }
@@ -96,6 +103,7 @@
         scrubbing = false;
         try { header.releasePointerCapture(e.pointerId); } catch (_) {}
     }
+
     header.addEventListener('pointerup', endScrub);
     header.addEventListener('pointercancel', endScrub);
 })();

@@ -1,9 +1,5 @@
-// Opens external links inside post content in a new tab with noopener.
-// Saves having to add {: target="_blank"} on every Markdown link.
 (function () {
     var siteHost = location.hostname;
-
-    // Same-origin resources that should still open in a new tab
     var SAME_ORIGIN_NEW_TAB = ['/feed.xml'];
 
     function shouldOpenInNewTab(anchor) {
@@ -28,7 +24,6 @@
         anchor.dataset.externalDecorated = '1';
     }
 
-    // Only touches prose content; header/footer links are hand-authored
     function run() {
         var scopes = document.querySelectorAll('.post__content');
         scopes.forEach(function (scope) {
