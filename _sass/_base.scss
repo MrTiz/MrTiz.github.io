@@ -295,7 +295,10 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback Ubuntu";
-    src: local("Ubuntu Mono");
+    src: local("Ubuntu Mono"),
+        local("UbuntuMono-Regular"),
+        local("UbuntuMono-R"),
+        local("UbuntuMono");
     font-style: normal;
     size-adjust: 240.0000%;
     ascent-override: 38.6556%;
@@ -305,7 +308,9 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback Ubuntu";
-    src: local("Ubuntu Mono Italic");
+    src: local("Ubuntu Mono Italic"),
+        local("UbuntuMono-Italic"),
+        local("UbuntuMono-RI");
     font-style: italic;
     size-adjust: 240.0000%;
     ascent-override: 38.6556%;
@@ -315,7 +320,9 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback Roboto";
-    src: local("Roboto Mono");
+    src: local("Roboto Mono"),
+        local("RobotoMono-Regular"),
+        local("RobotoMono");
     font-style: normal;
     size-adjust: 97.6404%;
     ascent-override: 95.0155%;
@@ -325,7 +332,8 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback Roboto";
-    src: local("Roboto Mono Italic");
+    src: local("Roboto Mono Italic"),
+        local("RobotoMono-Italic");
     font-style: italic;
     size-adjust: 97.6404%;
     ascent-override: 95.0155%;
@@ -333,9 +341,14 @@
     line-gap-override: 0%;
 }
 
+// DejaVu Sans Mono ships on Debian/Ubuntu and inside headless Chromium on
+// Linux CI (Lighthouse). fontconfig can resolve it via any of these names.
 @font-face {
     font-family: "Cascadia Code Fallback DejaVu";
-    src: local("DejaVu Sans Mono");
+    src: local("DejaVu Sans Mono"),
+        local("DejaVuSansMono"),
+        local("DejaVuSansMono-Book"),
+        local("DejaVu Sans Mono Book");
     font-style: normal;
     size-adjust: 97.3236%;
     ascent-override: 95.3247%;
@@ -345,7 +358,10 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback DejaVu";
-    src: local("DejaVu Sans Mono Oblique");
+    src: local("DejaVu Sans Mono Oblique"),
+        local("DejaVuSansMono-Oblique"),
+        local("DejaVu Sans Mono BookOblique"),
+        local("DejaVuSansMono-BookOblique");
     font-style: italic;
     size-adjust: 97.3236%;
     ascent-override: 95.3247%;
@@ -355,7 +371,9 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback Liberation";
-    src: local("Liberation Mono");
+    src: local("Liberation Mono"),
+        local("LiberationMono-Regular"),
+        local("LiberationMono");
     font-style: normal;
     size-adjust: 97.6404%;
     ascent-override: 95.0155%;
@@ -365,7 +383,8 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback Liberation";
-    src: local("Liberation Mono Italic");
+    src: local("Liberation Mono Italic"),
+        local("LiberationMono-Italic");
     font-style: italic;
     size-adjust: 97.6404%;
     ascent-override: 95.0155%;
@@ -375,7 +394,9 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback Noto";
-    src: local("Noto Sans Mono");
+    src: local("Noto Sans Mono"),
+        local("NotoSansMono-Regular"),
+        local("NotoSansMono");
     font-style: normal;
     size-adjust: 200.0000%;
     ascent-override: 46.3867%;
@@ -385,7 +406,8 @@
 
 @font-face {
     font-family: "Cascadia Code Fallback Noto";
-    src: local("Noto Sans Mono Italic");
+    src: local("Noto Sans Mono Italic"),
+        local("NotoSansMono-Italic");
     font-style: italic;
     size-adjust: 200.0000%;
     ascent-override: 46.3867%;

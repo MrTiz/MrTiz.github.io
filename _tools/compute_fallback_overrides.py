@@ -302,30 +302,30 @@ emit(targets["cascadia_it"],  fb["consolas"], "Cascadia Code Fallback Consolas",
 
 # Ubuntu Mono (Ubuntu native)
 emit(targets["cascadia_reg"], fb["ubuntumono"], "Cascadia Code Fallback Ubuntu",
-     'local("Ubuntu Mono")', "normal")
+     'local("Ubuntu Mono"), local("UbuntuMono-Regular"), local("UbuntuMono-R"), local("UbuntuMono")', "normal")
 emit(targets["cascadia_it"],  fb["ubuntumono"], "Cascadia Code Fallback Ubuntu",
-     'local("Ubuntu Mono Italic")', "italic")
+     'local("Ubuntu Mono Italic"), local("UbuntuMono-Italic"), local("UbuntuMono-RI")', "italic")
 
 # Roboto Mono (Android)
 emit(targets["cascadia_reg"], fb["robotomono"], "Cascadia Code Fallback Roboto",
-     'local("Roboto Mono")', "normal")
+     'local("Roboto Mono"), local("RobotoMono-Regular"), local("RobotoMono")', "normal")
 emit(targets["cascadia_it"],  fb["robotomono"], "Cascadia Code Fallback Roboto",
-     'local("Roboto Mono Italic")', "italic")
+     'local("Roboto Mono Italic"), local("RobotoMono-Italic")', "italic")
 
-# DejaVu Sans Mono (Debian/Ubuntu default mono)
+# DejaVu Sans Mono (Debian/Ubuntu default mono, headless Chromium on Linux CI)
 emit(targets["cascadia_reg"], fb["dejavumono"], "Cascadia Code Fallback DejaVu",
-     'local("DejaVu Sans Mono")', "normal")
+     'local("DejaVu Sans Mono"), local("DejaVuSansMono"), local("DejaVuSansMono-Book"), local("DejaVu Sans Mono Book")', "normal")
 emit(targets["cascadia_it"],  fb["dejavumono"], "Cascadia Code Fallback DejaVu",
-     'local("DejaVu Sans Mono Oblique")', "italic")
+     'local("DejaVu Sans Mono Oblique"), local("DejaVuSansMono-Oblique"), local("DejaVu Sans Mono BookOblique"), local("DejaVuSansMono-BookOblique")', "italic")
 
 # Liberation Mono (RHEL/Fedora default mono)
 emit(targets["cascadia_reg"], fb["libmono"], "Cascadia Code Fallback Liberation",
-     'local("Liberation Mono")', "normal")
+     'local("Liberation Mono"), local("LiberationMono-Regular"), local("LiberationMono")', "normal")
 emit(targets["cascadia_it"],  fb["libmono"], "Cascadia Code Fallback Liberation",
-     'local("Liberation Mono Italic")', "italic")
+     'local("Liberation Mono Italic"), local("LiberationMono-Italic")', "italic")
 
 # Noto Sans Mono (ChromeOS, generic mono)
 emit(targets["cascadia_reg"], fb["notomono"], "Cascadia Code Fallback Noto",
-     'local("Noto Sans Mono")', "normal")
+     'local("Noto Sans Mono"), local("NotoSansMono-Regular"), local("NotoSansMono")', "normal")
 emit(targets["cascadia_it"],  fb["notomono"], "Cascadia Code Fallback Noto",
-     'local("Noto Sans Mono Italic")', "italic")
+     'local("Noto Sans Mono Italic"), local("NotoSansMono-Italic")', "italic")

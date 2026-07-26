@@ -162,13 +162,6 @@
     -webkit-mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent 100%);
 }
 
-// Card grid. `minmax(0, 1fr)` (not `1fr`) prevents the column from
-// growing to fit the min-content of its children — otherwise a long
-// unbroken word inside a card would push the whole grid past the
-// container width. Default: no outward pull. We only apply the negative
-// margin (to make card content align flush with the page's text column)
-// once --container-pad is at least as wide as --space-5, which happens
-// around a 800px viewport with the clamp(1rem, 3vw, 3rem) token.
 .post-list {
     display: grid;
     gap: var(--space-5);
@@ -386,13 +379,12 @@
 .about-links__handle {
     font-family: var(--font-mono);
     font-size: var(--step--1);
-    color: var(--fg-3);
+    color: var(--fg-2);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-// --- Disclaimer ---
 .disclaimer {
     margin-block: var(--space-5) var(--space-7);
     padding: var(--space-5) var(--space-6);
