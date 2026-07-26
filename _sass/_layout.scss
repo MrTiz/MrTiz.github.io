@@ -450,6 +450,13 @@ body[data-toc-open="true"] {
     overflow: hidden;
 }
 
+body[data-toc-open="true"] .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
 // --- Scroll-to-top (post pages only, revealed past DEEP_THRESHOLD in scroll-header.js) ---
 .scroll-top {
     position: fixed;
