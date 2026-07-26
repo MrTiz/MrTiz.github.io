@@ -1,0 +1,13 @@
+{%- capture scss -%}
+@import "tokens";
+@import "reset";
+@import "base";
+@import "layout";
+@import "components";
+@import "home";
+@import "post";
+@import "tags-page";
+@import "syntax";
+@import "utilities";
+{%- endcapture -%}
+<style>{{ scss | scssify }}</style>
